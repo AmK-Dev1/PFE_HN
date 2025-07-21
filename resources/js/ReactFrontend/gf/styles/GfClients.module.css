@@ -1,0 +1,149 @@
+/* Container styles */
+.container {
+    padding: 20px;
+    background-color: #f8f9fb;
+    font-family: 'Lato', sans-serif;
+    color: #1a1a1a;
+}
+
+/* Table styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table th, .table td {
+    padding: 12px;
+    border: 1px solid #e3e3e3;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    color: #333;
+}
+
+.table tr:hover {
+    background-color: #f0f0f5;
+}
+
+/* Button styles */
+.button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+.add {
+    background-color: #5cb85c;
+    color: white;
+}
+
+.edit {
+    background-color: #5bc0de;
+    color: white;
+}
+
+.delete {
+    background-color: #d9534f;
+    color: white;
+}
+
+/* Modal Overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal styling */
+.modal {
+    background: white;
+    border-radius: 8px;
+    padding: 20px; /* Decreased padding for better spacing */
+    width: 90%;
+    max-width: 500px;
+    max-height: 400px; /* Set maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Error Message styling */
+.errorMessage {
+    color: #d9534f;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-align: center; /* Center the error message */
+}
+
+/* Form styles */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Increased gap for better spacing */
+    max-width: 400px;
+    margin: 0 auto; /* Centers the form within the modal */
+}
+
+.form input, .form textarea {
+    padding: 12px; /* Increased padding for better touch */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    margin: 0 auto; /* Center the input fields */
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+
+/* Centering the header */
+.formHeader {
+    text-align: center; /* Center the form header */
+    margin-bottom: 20px; /* Adds space below the header */
+    font-size: 20px; /* Larger font size for the header */
+    font-weight: bold; /* Bold header */
+}
+
+/* Button Container */
+.buttonContainer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px; /* Increased top margin for better spacing */
+}
+
+.cancel {
+    background-color: #f44336; /* Red color for cancel button */
+    color: white;
+}
+/* Custom scrollbar styles */
+.modal::-webkit-scrollbar {
+    width: 8px; /* Width of the scrollbar */
+}
+
+.modal::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the scrollbar thumb */
+    border-radius: 4px; /* Rounded corners for the scrollbar thumb */
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* Darker color on hover */
+}
+
+.modal::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Background of the scrollbar track */
+    border-radius: 4px; /* Rounded corners for the scrollbar track */
+}

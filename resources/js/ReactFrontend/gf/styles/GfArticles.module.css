@@ -1,0 +1,205 @@
+/* Container styles */
+.container {
+    padding: 20px;
+    background-color: #f8f9fb;
+    font-family: 'Lato', sans-serif;
+    color: #1a1a1a;
+}
+
+/* Table styles */
+.table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table th, .table td {
+    padding: 8px;
+    border: 1px solid #e3e3e3;
+    text-align: left;
+    font-size: 14px;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    color: #333;
+}
+
+.table tr:hover {
+    background-color: #f0f0f5;
+}
+
+/* Button styles */
+.button {
+    padding: 6px 10px; /* Réduction de la taille des boutons */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px; /* Réduction de la taille de la police */
+    margin-right: 5px; /* Espacement réduit */
+}
+
+.add {
+    background-color: #5cb85c;
+    color: white;
+}
+
+.edit {
+    background-color: #5bc0de;
+    color: white;
+}
+
+.delete {
+    background-color: #d9534f;
+    color: white;
+}
+
+/* Button container for actions */
+.table td .actions {
+    display: flex;
+    gap: 5px; /* Espace entre les boutons */
+    flex-wrap: wrap; /* Permettre aux boutons de s'empiler si nécessaire */
+}
+
+/* Modal Overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal styling */
+.modal {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Form styles */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form input, .form textarea {
+    padding: 10px; /* Réduction du padding */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Button container */
+.buttonContainer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+/* Formulaire select */
+.select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 14px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.select:hover {
+    border-color: #888;
+}
+
+/* Responsive table on smaller screens */
+@media (max-width: 768px) {
+    .table th, .table td {
+        font-size: 12px; /* Réduire la taille de la police sur les petits écrans */
+        padding: 6px; /* Réduction du padding */
+    }
+
+    .button {
+        padding: 5px 8px; /* Réduire la taille des boutons sur les petits écrans */
+        font-size: 10px;
+    }
+
+    .table td .actions {
+        flex-direction: column; /* Empiler les boutons sur petits écrans */
+        gap: 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .form {
+        max-width: 100%; /* Élargir le formulaire sur les petits écrans */
+    }
+
+    .buttonContainer {
+        flex-direction: column; /* Empiler les boutons sur petits écrans */
+        gap: 10px;
+    }
+}
+.buttonFilterContainer {
+    display: flex;
+    justify-content: space-between; /* Espace entre le bouton et le filtre */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.leftContainer {
+    display: flex;
+    align-items: center; /* Aligner verticalement le bouton et le FFE */
+}
+
+.ffeContainer {
+    margin-left: 15px; /* Espacement entre le bouton et l'affichage du FFE */
+    display: flex;
+    align-items: center;
+}
+
+.ffeValue {
+    margin-left: 8px;
+    font-weight: bold;
+    font-size: 14px; /* Taille du texte pour le FFE */
+}
+
+.filterWrapper {
+    display: flex;
+    align-items: center;
+}
+
+.filter {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-left: 8px;
+    background-color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+

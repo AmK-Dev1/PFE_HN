@@ -1,0 +1,92 @@
+<?php
+
+return [
+    'welcome_to' => 'Bienvenue à :name',
+    'connect_as_admin' => "Se connecter à l'admin",
+    'connect_as_office' => "Se connecter à un cabinet",
+    'login' => [
+        'sing_in' => 'Se connecter',
+        'sing_up' => "S'enregistrer",
+        'login' => 'Se connecter',
+        'logout' => 'Se déconnecter',
+        'register' => "S'enregistrer",
+        'welcome-text' => 'Veuillez vous authentifier',
+        'new-account' => 'Nouveau ici ?',
+        'have_account' => 'Compte existant',
+        'welcome-message' => 'Bienvenue',
+        'create-password' => 'Créer un nouveau mot de passe',
+        'login-text' => 'Se connecter',
+        'remember_me' => 'Se souvenir de moi.',
+        'forgot-password' => 'Mot de passe oublié ?',
+        'forgot-text' => 'Récupération de mot de passe.',
+        'reset-password' => 'Définir un nouveau mot de passe',
+        'reset-message' => 'Nouveau mot de passe',
+        'reset-text' => 'Votre nouveau mot de passe doit être différent des mots de passe précédemment utilisés.',
+        'send-reset-link' => 'Envoyer le lien de réinitialisation',
+    ],
+
+    'models' => [
+        'role' => '{1}Rôle|[2.*]Rôles',
+        'admin' => '{1}Admin|[2.*]Admins',
+        'setting' => '{1}Paramètre|[2.*]Paramètres',
+        'account' => '{1}Compte|[2.*]Comptes',
+        'notification' => '{1}Notification|[2.*]Notifications',
+        'user' => '{1}Utilisateur|[2.*]Utilisateurs',
+        'company' => '{1}Entreprise|[2.*]Entreprises',
+        'budget' => '{1}Budget|[2.*]Budgets',
+        'type' => '{1}Type|[2.*]Types',
+        'subtype' => '{1}Sous-type|[2.*]Sous-types',
+        'configuration' => '{1}Configuration|[2.*]Configurations',
+        'contribution' => '{1}Cotisation|[2.*]Cotisations',
+        'operations'=>'{1}opérations|[2.*]opérations',
+    ],
+
+    'fields' => [
+        'email' => 'Email',
+        'password' => 'Mot de passe',
+        'password_confirmation' => 'Confirmation du mot de passe',
+        'first_name' => 'Prénom',
+        'last_name' => 'Nom',
+        'name' => 'Nom',
+        'title' => 'Titre',
+        'description' => 'Description',
+        'date' => 'Date',
+        'created_at' => 'Créé le',
+        'updated at' => 'Mise à jour le',
+        'dashboard' => 'Tableau de bord',
+        'address' => 'Addresse',
+        'username' => 'Identifiant',
+        'birth_date' => 'Date de naissance',
+        'done' => 'Terminée',
+        'company' => 'Entreprise',
+        'type' => 'Type',
+        'value' => 'Valeur (%)',
+        'year' => 'Année',
+        'created_at' => 'Créé le',
+        'updated_at' => 'Mis à jour le',
+        'rrq_max_salary' => 'RRQ - Max Salary',
+        'rrq_exemption' => 'RRQ - Exemption',
+        'rrq_rate_employee' => 'RRQ - Employee Rate (%)',
+        'rrq_rate_employer' => 'RRQ - Employer Rate (%)',
+
+        'ae_max_salary' => 'AE - Max Salary',
+        'ae_rate_employee' => 'AE - Employee Rate (%)',
+        'ae_rate_employer' => 'AE - Employer Rate (%)',
+
+        'rqap_max_salary' => 'RQAP - Max Salary',
+        'rqap_rate_employee' => 'RQAP - Employee Rate (%)',
+        'rqap_rate_employer' => 'RQAP - Employer Rate (%)',
+
+        'cnt_max_salary' => 'CNT - Max Salary',
+        'cnt_rate' => 'CNT - Rate (%)',
+
+        'fss_rate' => 'FSS - Rate (%)',
+    ],
+
+
+    'langs' => [
+        'en' => 'En',
+        'fr' => 'Fr',
+    ],
+
+];

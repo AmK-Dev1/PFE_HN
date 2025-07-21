@@ -1,0 +1,198 @@
+<?php
+
+return  [
+
+    'flash' => [
+        'create' => 'Record has been created successfully',
+        'update' => 'Record has been updated successfully',
+        'delete' => 'Record has been deleted successfully',
+        'payment_url' => 'Url has been generated successfully',
+        'failed' => 'Oops! Something went wrong please.',
+        'login_success' => 'Welcome back :name',
+        'success' => 'Success',
+        'error' => 'Error',
+        'treatment_is_in_an_invoice' => 'This act is already invoiced. You cannot delete it.'
+
+    ],
+
+    'static' => [
+        'details' => 'Details',
+        'edit' => 'Edit',
+        'delete' => 'Delete',
+        'list' => 'List of :name',
+        'create' => 'Create a new :name',
+        'save' => 'Save',
+        'reset' => 'Reset',
+        'back' => 'Back',
+        'search' => 'Search',
+        'print_img' => "Print the image",
+        'addLine' => "Ajouter une ligne",
+        'admin_login_welcome' => 'Welcome to APS admin',
+        'would_you_like_to_create_a_treatment_plan_for_this_patient' => 'Would you like to create a treatment plan for this patient ?',
+        'admin_login_text'    => 'Login and start your session',
+        'forgot_password'    => 'Forgot Password ?',
+        'loading_text'    => 'Please wait...',
+        'continue'    => 'Continue',
+        'send'    => 'Send',
+        'send-item'    => 'Send :name',
+        'submit'    => 'Submit',
+        'reset'    => 'Reset',
+        'clear'    => 'Clear',
+        'search'    => 'Search',
+        'download'    => 'Download',
+        'save'    => 'Save',
+        'save_and_send'    => 'Save and send',
+        'save_and_download'    => 'Save and download',
+        'generate_titre'=>'generate support title',
+        'next'    => 'Next',
+        'create'    => 'Create',
+        'create-item'    => 'Create new :name',
+        'edit'    => 'Edit',
+        'edit-item'    => 'Edit :name',
+        'delete-item'    => 'Delete :name',
+        'delete'    => 'Delete',
+        'cancel'    => 'Cancel',
+        'back'    => 'Back',
+        'back-to'    => 'Back To :name',
+        'mark-as'    => 'Mark as :name',
+        'actions'    => 'Actions',
+        'filters' => 'Filters',
+        'filter_options' => 'Filter options',
+        'more' => 'More ...',
+        'less' => 'Less',
+        'total_user_with_role' => 'Total users with this role',
+        'view-item' => 'View :name',
+        'view' => 'View',
+        'and' => 'and',
+        'add-new' => 'Add new :name',
+        'super_admin' => 'Administrator Access',
+        'super_admin_text' => 'Allows a full access to the system',
+        'select_all' => 'Select all',
+        'close'    => 'Close',
+        'open'    => 'Open',
+        'details' => 'Details',
+        'allowed_files_types' => "Allowed file types: png, jpg, jpeg.",
+        'CurentHospitalization'=>'Patient has :number hospitalization',
+        'from_to'=>'from :start to :end ',
+
+        'delete_confirm_title' => 'Are you sure?',
+        'delete_confirm_text' => "You won t be able to revert this!",
+        'delete_btn_yes' => 'Yes',
+        'delete_btn_cancel' => 'Cancel',
+
+        'change_confirm_title' => 'Are you sure?',
+        'change_confirm_text' => "You won t be able to revert this!",
+        'change_btn_yes' => 'Yes',
+        'change_btn_cancel' => 'Cancel',
+
+        'confirm_btn_yes' => 'Confirm',
+        'confirm_btn_cancel' => 'Cancel',
+
+        'restore_confirm_title' => 'Are you sure?',
+        'restore_confirm_text' => "Do you really want to restore !",
+        'restore_btn_yes' => 'Yes',
+        'restore_btn_cancel' => 'Cancel',
+
+        'selected' => 'Selected',
+        'delete_selected' => 'Delete selected',
+
+        'add-attribute' => 'Add attribute',
+        'accounts' => 'Accounts',
+        'product_management' => 'Product management',
+        'invoices' => 'Invoices',
+
+        'forgot_password_message' => 'Change your password in three easy steps. This helps to keep your new password
+        secure.',
+        'forget_password_steps' => [
+            1 => 'Fill in your email address below.',
+            2 => 'We\'ll email you a temporary code.',
+            3 => 'Use the code to change your password on our secure website.',
+        ],
+        'enter_your_email' => 'Enter your email address',
+        'reset_message' => 'Reset Password',
+        'reset_text' => 'Your new password must be different from previously used passwords',
+        'shop' => 'Shop',
+        'view_all' => 'View all',
+        'list' => 'List Of :name',
+        'offer_closed' => 'This is offer is closed',
+        'offer_action_forbidden' => 'You cannot do this operation. You are not the owner of this offer',
+        'order_must_accepted' => 'Order must be accepted',
+        'your_offer' => "You can't make order on your offer",
+        'order_user_must_driver' => "Only the driver can make this operation",
+
+        // not translate yet
+        'general-info' => 'General information',
+        'personal-info' => 'Personal information',
+        'admin-info' => 'Admin information',
+        'manager-info' => 'Manager information',
+        'add_admin_?' => 'Add an admin ?',
+
+        'logged_as' => 'You are logged in as :name',
+
+        'back_as_admin' => 'Log back as admin',
+        'user_must_be_subscribed_to_the_program' => 'The user must be subscribed to the program',
+
+        'sign_in' => 'Sign in',
+        'welcome_to' => 'Welcome to :name',
+        'join_wait_list' => 'Join wait list',
+        'schedule_an_appointment' => 'Schedule an appointment',
+
+        'you_have_been_added_to_the_waiting_list' => 'You have been added to the wait list',
+        'we_will_text_you_when_it_is_time_to_return' => 'We\'ll text you when it\'s time to return',
+        'done' => 'Done',
+        'you_will_be_redirected_to_starting_page' => 'You will redirected to start page after',
+        'click_here_to_stay_on_this_page' => 'Click here to stay on this page',
+        'seconds' => 'Seconds',
+
+        'view_wait_list' => 'View wait list',
+        'remove_me_from_wait_list' => 'Remove from wait list',
+        'i_have_arrived' => 'I have arrived',
+        'i_am_running_late' => 'I\'m running late',
+
+        'wait_list' => 'Wait list',
+        'serving' => 'Serving',
+        'manage' => 'Manage',
+        'send_email' => 'Send per email',
+
+        'add' => 'Add',
+        'remove' => 'Remove',
+        'change_office' => 'Change office',
+
+        'redress_code_act_error' => 'Act code returned different than the one sent',
+        'redress_act_count_error' => 'Number of acts returned different than the one sent',
+        'accident_recognition_error' => 'Accident number not recognized',
+        'act_code_unauthorized' => 'Act code unauthorized',
+
+        'abandon_invoice' => 'Abandon invoice',
+        'suspend_invoice' => 'Suspend invoice',
+
+        'use_office_as_biller' => 'Use office as invoice maker',
+
+        'reminders_sent' => 'Reminders sent',
+        'settings' => 'Settings',
+        'working_hours' => 'Opening Hours',
+        'personal_number_is_missing' => 'The personal number is missing',
+
+        'doctena' => [
+            'invalid_config' => 'Invalid Doctena configuration',
+            'unauthorized' => 'Unauthorized. Authorization information is missing or invalid.',
+            'forbidden' => 'Forbidden. Call not allowed.',
+            'server_error' => 'Server Error. Please contact doctena support for more information',
+            'not_found' => 'Not found',
+            'precondition_failed' => 'Precondition failed',
+            'bad_request' => 'Bad request',
+            'too_many_requests' => 'Too Many Requests. Each api key has a rate nd quota of allowed requests.',
+        ],
+        'retrocessions_period_overlap' => 'Please select a date that does not overlap with existing retrocessions for this receiver',
+
+        'import' => 'Import',
+        'export' => 'Export',
+        'the_date_and_location' => 'The :date, :location',
+        'the_date' => 'The :date',
+
+        "billing_and_cns_sending_settings" => "Billing settings and CNS sending",
+        "caregiver_information" => "Caregiver information",
+        "genaral_information" => "General information"
+
+    ],
+];

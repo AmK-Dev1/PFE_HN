@@ -1,0 +1,10 @@
+.nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-sm {
+    padding: 2px 5px;
+    font-size: 0.8rem;
+}
