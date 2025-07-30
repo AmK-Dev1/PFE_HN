@@ -31,7 +31,6 @@
             <table id="employeeTable" class="table table-borderless text-center align-middle">
                 <thead class="thead-light">
                     <tr>
-                      <th>Type operations</th>
                         <th>Nom employé</th>
                         <th>Poste</th>
                         <th>Heures travaillées/an</th>
@@ -78,14 +77,7 @@
         {{-- Template pour ajout dynamique --}}
         <template id="employeeRowTemplate">
     <tr>
-      <td>
-            <select name="operation_type_id" class="form-control form-control-sm">
-                <option value="">-- Choisir --</option>
-                @foreach($operationTypes as $type)
-                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                @endforeach
-            </select>
-        </td>
+
 
       
         <td><input type="text" class="form-control form-control-sm" name="employee_name"></td>

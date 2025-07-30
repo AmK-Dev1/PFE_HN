@@ -14,9 +14,11 @@ class DashboardController extends Controller
 {
     public function index()
     {
+
         $company = Auth::user()->companies()->first();
         $operationTypes = OperationType::where('company_id', $company->id)->get();
-    
+
         return view('user.dashboard', compact('operationTypes'));
+
     }
 }

@@ -48,7 +48,7 @@ class EmployeeController extends Controller
             'employees' => Employees::where('operation_type_id', $operationTypeId)->get(),
             'entetes' => EnteteActivite::where('operation_type_id', $operationTypeId)->get(),
             'operationTypes' => OperationType::all(),
-            'contribution' => $contribution,
+            'contribution' => $contribution, // hna ra7 nakhadmo part 2
             'operationTypeId' => $operationTypeId, // utile pour la vue
         ]);
     }
