@@ -84,7 +84,7 @@
         @if(isset($operationTypes) && $operationTypes->count() > 0)
     @foreach($operationTypes as $operationType)
         <li>
-            <a href="{{ route('user.fardeauMO.operations.index', ['type' => $operationType->id]) }}">
+            <a href="{{ route('user.fardeauMO.employees.index', ['type' => $operationType->id]) }}">
                 <i class="fas fa-cogs"></i> {{ $operationType->name }}
             </a>
         </li>

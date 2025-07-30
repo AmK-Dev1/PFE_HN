@@ -15,8 +15,16 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
+        $operationTypeId = $request->query('type');
+
+        if (!$operationTypeId) {
+            return redirect()->back()->with('error', 'Paramètre "type" manquant dans l’URL.');
+        }
+
         if ($request->ajax()) {
-            $employees = Employees::with('operationType')->get();
+            $employees = Employees::with('operationType')
+                ->where('operation_type_id', $operationTypeId)
+                ->get();
 
             return DataTables::of($employees)
                 ->addColumn('action', function ($employee) {
@@ -37,12 +45,14 @@ class EmployeeController extends Controller
         }
 
         return view('user.fardeauMO.employees.index', [
-            'employees' => Employees::all(),
-            'entetes' => EnteteActivite::all(),
+            'employees' => Employees::where('operation_type_id', $operationTypeId)->get(),
+            'entetes' => EnteteActivite::where('operation_type_id', $operationTypeId)->get(),
             'operationTypes' => OperationType::all(),
-            'contribution' => $contribution
+            'contribution' => $contribution,
+            'operationTypeId' => $operationTypeId, // utile pour la vue
         ]);
     }
+
 
     public function store(Request $request)
     {

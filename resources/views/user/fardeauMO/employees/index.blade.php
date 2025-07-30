@@ -142,27 +142,27 @@
 <script>
 window.contributionRates = {
     rrq: {
-        rate: {{ $contribution->rrq_rate_employee / 100 }},
-        exemption: {{ $contribution->rrq_exemption }},
-        max: {{ $contribution->rrq_max_salary }}
+        rate: {{ json_encode($contribution->rrq_rate_employee / 100) }},
+        exemption: {{ json_encode($contribution->rrq_exemption) }},
+        max: {{ json_encode($contribution->rrq_max_salary) }}
     },
     ae: {
-        rate: {{ $contribution->ae_rate_employer / 100 }},
-        max: {{ $contribution->ae_max_salary }}
+        rate: {{ json_encode($contribution->ae_rate_employer / 100) }},
+        max: {{ json_encode($contribution->ae_max_salary) }}
     },
     rqap: {
-        rate: {{ $contribution->rqap_rate_employer / 100 }},
-        max: {{ $contribution->rqap_max_salary }}
+        rate: {{ json_encode($contribution->rqap_rate_employer / 100) }},
+        max: {{ json_encode($contribution->rqap_max_salary) }}
     },
     csst: {
-        rate: {{ $contribution->csst_rate / 100 }}
+        rate: {{ json_encode($contribution->csst_rate / 100) }}
     },
     fssq: {
-        rate: {{ $contribution->fss_rate / 100 }}
+        rate: {{ json_encode($contribution->fss_rate / 100) }}
     },
     cnt: {
-        rate: {{ $contribution->cnt_rate / 100 }},
-        max: {{ $contribution->cnt_max_salary }}
+        rate: {{ json_encode($contribution->cnt_rate / 100) }},
+        max: {{ json_encode($contribution->cnt_max_salary) }}
     }
 };
 </script>
@@ -345,7 +345,140 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function calculateEntetePercentages(element) {
+    console.log("------------------------------------")
+    const row = element.closest('tr');
+
+    const pauseMinutes = parseFloat(row.querySelector('[name="minutes_pause"]')?.value || 0);
+    const deadMinutes = parseFloat(row.querySelector('[name="minutes_temps_mort"]')?.value || 0);
+
+    const totalMinutesInDay = 8 * 60;
+
+    const pourcentagePause = (pauseMinutes / totalMinutesInDay) * 100;
+    const pourcentageTempsMort = (deadMinutes / totalMinutesInDay) * 100;
+
+    row.querySelector('[name="pourcentage_pause"]').value = pourcentagePause.toFixed(2);
+    row.querySelector('[name="pourcentage_temps_mort"]').value = pourcentageTempsMort.toFixed(2);
+}
+
 </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Fonction pour mettre à jour les pourcentages dans chaque ligne
+    function updatePercentagesForRow(row) {
+        const pause = parseFloat(row.querySelector('[name="minutes_pause"]')?.value || 0);
+        const mort = parseFloat(row.querySelector('[name="minutes_temps_mort"]')?.value || 0);
+        const totalMin = 8 * 60;
+
+        const pausePct = (pause / totalMin) * 100;
+        const mortPct = (mort / totalMin) * 100;
+
+        const pauseField = row.querySelector('[name="pourcentage_pause"]');
+        const mortField = row.querySelector('[name="pourcentage_temps_mort"]');
+        if (pauseField) pauseField.value = pausePct.toFixed(2);
+        if (mortField) mortField.value = mortPct.toFixed(2);
+    }
+
+    // Fonction principale de mise à jour des totaux
+    function updateEnteteTotals() {
+        let totalJoursFeries = 0;
+        let totalMinutesPause = 0;
+        let totalMinutesTempsMort = 0;
+        let totalPourcentagePause = 0;
+        let totalPourcentageTempsMort = 0;
+        let count = 0;
+
+        document.querySelectorAll('#enteteTable tbody tr').forEach(row => {
+            updatePercentagesForRow(row); // Toujours recalculer les %
+            const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
+
+            totalJoursFeries += get('jours_feries');
+            totalMinutesPause += get('minutes_pause');
+            totalMinutesTempsMort += get('minutes_temps_mort');
+            totalPourcentagePause += get('pourcentage_pause');
+            totalPourcentageTempsMort += get('pourcentage_temps_mort');
+            count++;
+        });
+
+        document.getElementById('totalJoursFeries').innerText = totalJoursFeries.toFixed(2);
+        document.getElementById('totalMinutesPause').innerText = totalMinutesPause.toFixed(2);
+        document.getElementById('totalMinutesTempsMort').innerText = totalMinutesTempsMort.toFixed(2);
+        document.getElementById('totalPourcentagePause').innerText = count ? (totalPourcentagePause / count).toFixed(2) : '0';
+        document.getElementById('totalPourcentageTempsMort').innerText = count ? (totalPourcentageTempsMort / count).toFixed(2) : '0';
+    }
+
+    // Écoute globale : déclenche update dès qu’un input est modifié dans le tableau
+    document.querySelector('#enteteTable').addEventListener('input', () => {
+        updateEnteteTotals();
+    });
+
+    // Appel initial
+    updateEnteteTotals();
+});
+</script>
+
+<script>
+ document.addEventListener('click', async e => {
+    if (e.target.closest('.btn-save-entete')) {
+        const row = e.target.closest('tr');
+
+        const data = {};
+
+        row.querySelectorAll('input').forEach(input => {
+            if (input.name) data[input.name] = input.value;
+        });
+
+        data.id = row.dataset.id !== 'new' ? row.dataset.id : null;
+        
+        // add the type id to data
+        const type = new URLSearchParams(window.location.search).get("type");
+        data.operation_type_id = type;
+        
+        try {
+            const res = await fetch(`{{ route('user.fardeauMO.entetes.storeAjax') }}?type=${type}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const text = await res.text();
+
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (parseError) {
+                console.error('❌ Réponse non JSON :', text);
+                alert('❌ Erreur serveur (réponse invalide)');
+                return;
+            }
+
+            if (res.ok && json.success) {
+                row.dataset.id = json.id;
+                alert('✅ Entête enregistrée avec succès !');
+            } else if (res.status === 422 && json.errors) {
+                const messages = Object.values(json.errors).flat().join('\n');
+                alert('❌ Erreurs de validation :\n' + messages);
+            } else {
+                console.warn('❌ Erreur inconnue :', json.message || text);
+                alert('❌ Une erreur est survenue : ' + (json.message || 'Erreur inconnue'));
+            }
+
+        } catch (err) {
+            console.error('❌ Erreur AJAX', err);
+            alert('❌ Impossible de communiquer avec le serveur');
+        }
+    }
+});
+</script>
+
+
 @endpush
 
 

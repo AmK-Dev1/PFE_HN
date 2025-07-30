@@ -9,14 +9,21 @@ class EnteteActivite extends Model
 {
     use HasFactory;
 
-    protected $table = 'entetes_activites'; // Nom de la table
+    protected $table = 'entetes_activites';
 
     protected $fillable = [
-        'nom',
+        'operation_type_id',
         'annee',
-        'nb_semaines',
-        'nb_jours_feries',
+        'date_mise_a_jour',
+        'minutes_pause',
+        'minutes_temps_mort',
         'pourcentage_pause',
         'pourcentage_temps_mort',
+        'jours_feries',
     ];
+
+    public function operationType()
+    {
+        return $this->belongsTo(OperationType::class);
+    }
 }
