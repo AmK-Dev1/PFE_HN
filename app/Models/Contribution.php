@@ -24,7 +24,7 @@ class Contribution extends Model
         'ae_max_employee', 'ae_max_employer', 'ae_hourly_contribution', // ✅ AJOUT
     
         // RQAP
-        'rqap_max_salary', 'rqap_rate_employee', 'rqap_rate_employer',
+        'rqap_max_salary', 'rqap_rate_employee',
         'rqap_max_contribution', 'rqap_hourly_contribution', // ✅ AJOUT
     
         // CNT
@@ -83,7 +83,7 @@ class Contribution extends Model
     // 🔹 Calcul de la Cotisation max RQAP
     public function getRqapMaxContributionAttribute()
     {
-        return $this->rqap_max_salary * ($this->rqap_rate_employer / 100);
+        return $this->rqap_max_salary * ($this->rqap_rate_employee / 100);
     }
 
     // 🔹 Calcul de la Cotisation max CNT

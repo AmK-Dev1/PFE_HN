@@ -154,8 +154,9 @@
                                                     <tr>
                                                         <th>Année</th>
                                                         <th>Max Salaire</th>
-                                                        <th>Taux Employeur (%)</th>
+                                                        <th>Taux Employee (%)</th>
                                                         <th>Cotisation max</th>
+                                                        <th>Cotisation maximale RQAP/heure</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -166,8 +167,9 @@
                                                             <tr>
                                                                 <td>{{ $contribution->year }}</td>
                                                                 <td>{{ $contribution->rqap_max_salary ?? '-' }}$</td>
-                                                                <td>{{ $contribution->rqap_rate_employer ?? '-' }}%</td>
+                                                                <td>{{ $contribution->rqap_rate_employee ?? '-' }}%</td>
                                                                 <td>{{ $contribution->rqap_max_contribution ?? '-'  }}$</td>
+                                                                 <td>{{ $contribution->rqap_hourly_contribution?? '-'  }}$</td>
                                                                 <td>
                                                                     <a href="{{ route('user.fardeauMO.contributions.show', $contribution->id) }}">
                                                                         <i class="mr-50 fas fa-eye"></i>

@@ -181,6 +181,7 @@
                                                         <th>Max Salaire</th>
                                                         <th>Taux Employee (%)</th>
                                                         <th>Cotisation max</th>
+                                                        <th>Cotisation maximale RQAP/heure</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -190,8 +191,9 @@
                                                             <tr>
                                                                 <td>{{ $contribution->year }}</td>
                                                                 <td>{{ $contribution->rqap_max_salary }}$</td>
-                                                                <td>{{ $contribution->rqap_rate_employee }}%</td>
-                                                                <td>{{ $contribution->rqap_max_contribution }}$</td>
+                                                                <td>{{ number_format($contribution->rqap_rate_employee,4)}}%</td>
+                                                                 <td>{{ number_format($contribution->rqap_max_contribution,3)}}$</td>
+                                                                <td>{{ $contribution->rqap_hourly_contribution}}$</td>
                                                                 <td>
                                                                     <!-- Icône Voir -->
                                                                     <a href="{{ route('admin.contributions.show', $contribution->id) }}" title="Voir">

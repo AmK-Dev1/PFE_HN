@@ -52,8 +52,10 @@
                         <th>CSST ($/h)</th><!--CSST=SI(Nom de l'employé="";"";SI(Taux horaire corrigé=0;"";Taux horaire corrigé*Taux CSST (%)))-->
                         <th>FSSQ ($/h)</th><!--FSSQ=SI(Nom de l'employé="";"";SI(Taux horaire corrigé=0;"";Taux horaire corrigé*Taux FSSQ (%)))-->
                         <th>CNT ($/h)</th><!--CNT=SI(Nom de l'employé="";"";SI(Taux horaire corrigé=0;"";SI((Taux horaire corrigé*heures travaillée anuelement)>Cotisation maximale au CNT ;Cotisation maximale au CNT /heures travaillée anuelement;(Taux horaire corrigé*Taux CNT (%)))))--> 
+                        <th>Autres bénéfices avantages($)</th>
                         <th>Taux avant pauses ($/h)</th><!--Taux horaire corrigé+RRQ+AE+RQAP+CSST+FSSQ+CNT-->
                         <th>Coût annuel total ($)</th><!--Coût Annuel Total=SI(Nom de l'employé="";"";SI(Taux avant pauses, congés et temps mort="";"";(Taux avant pauses, congés et temps mort)*heures travaillée anuelement))-->
+                        <th>Dividende et autres avantages non imposables</th>
                         <th>Pause (min/h)</th><!--Pauses en minutes/heure=pourcentage_pause*60-->
                         <th>Temps mort (min/h)</th><!--Temps mort en minutes/heure=pourcentage_temps_mort*60-->
                         <th>Total non productif (min/h)</th><!--Total minutes non productives=Pauses en minutes+Temps mort en minutes-->
@@ -77,50 +79,49 @@
         {{-- Template pour ajout dynamique --}}
         <template id="employeeRowTemplate">
     <tr>
-
-
-      
-        <td><input type="text" class="form-control form-control-sm" name="employee_name"></td>
-        <td><input type="text" class="form-control form-control-sm" name="position"></td>
-        
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="hourly_rate" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="form-control form-control-sm" name="base_salary" readonly></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="retirement_fund" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="bonus" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="group_insurance" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="vacation_rate" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_vacation" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_leave" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="form-control form-control-sm" name="corrected_hourly_rate" readonly></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="rrq" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="ae" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="rqap" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="csst" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="fssq" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="cnt" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="form-control form-control-sm" name="rate_before_breaks" readonly></td>
-        <td><input type="number" class="form-control form-control-sm" name="total_annual_cost" readonly></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="break_time" onchange="calculateRow(this)"></td>
-        <td><input type="number" step="0.01" class="form-control form-control-sm" name="dead_time" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="form-control form-control-sm" name="total_non_productive" readonly></td>
-        <td><input type="number" class="form-control form-control-sm" name="productive_time" readonly></td>
-        <td><input type="number" class="form-control form-control-sm" name="productive_percentage" readonly></td>
-        <td><input type="number" class="form-control form-control-sm" name="burdened_rate" readonly></td>
-        <td><input type="number" class="form-control form-control-sm" name="burden_percentage" readonly></td>
-        <td><input type="date" class="form-control form-control-sm" name="hire_date" onchange="calculateRow(this)"></td>
-        <td><input type="number" class="form-control form-control-sm" name="seniority" readonly></td>
-        <td>
-            <div class="d-flex justify-content-center gap-1">
-                <button class="btn btn-success btn-sm btn-save-employee" title="Enregistrer">
-                    <i class="fas fa-save"></i>
-                </button>
-                <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </td>
+<td><input type="text" class="form-control form-control-sm" name="employee_name"></td>
+<td><input type="text" class="form-control form-control-sm" name="position"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="weeks_worked"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="vacation_rate"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="hourly_rate"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="annual_salary"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="retirement_fund"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="bonus"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="group_insurance"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits_hourly"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_vacation"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_leave"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="adjusted_hourly_rate"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="rrq"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="ae"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="rqap"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="csst"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="fssq"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="cnt"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_before_downtime"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="total_annual_cost"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="non_taxable_dividends"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="breaks_per_hour"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="idle_time_per_hour"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="total_non_productive_time"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time_percentage"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_with_burden"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="burden_percentage"></td>
+<td><input type="date" class="form-control form-control-sm" name="hire_date"></td>
+<td><input type="number" step="0.01" class="form-control form-control-sm" name="seniority"></td>
+<td>
+    <div class="d-flex justify-content-center gap-1">
+        <button class="btn btn-success btn-sm btn-save-employee" title="Enregistrer">
+            <i class="fas fa-save"></i>
+        </button>
+        <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</td>
     </tr>
 </template>
     </div>
@@ -134,45 +135,48 @@
 <script>
 window.contributionRates = {
     rrq: {
-        rate: {{ json_encode($contribution->rrq_rate_employee / 100) }},
-        exemption: {{ json_encode($contribution->rrq_exemption) }},
-        max: {{ json_encode($contribution->rrq_max_salary) }}
+        rate: {{ $contribution->rrq_rate_employee ?? 0 }}/100,
+        exemption: {{ $contribution->rrq_exemption ?? 0 }},
+        max: {{ $contribution->rrq_max_salary ?? 0 }}
     },
     ae: {
-        rate: {{ json_encode($contribution->ae_rate_employer / 100) }},
-        max: {{ json_encode($contribution->ae_max_salary) }}
+        rate: {{ $contribution->ae_rate_employer ?? 0 }}/100,
+        max: {{ $contribution->ae_max_salary ?? 0 }}
     },
     rqap: {
-        rate: {{ json_encode($contribution->rqap_rate_employer / 100) }},
-        max: {{ json_encode($contribution->rqap_max_salary) }}
+        rate: {{ $contribution->rqap_rate_employer ?? 0 }}/100,
+        max: {{ $contribution->rqap_max_salary ?? 0 }}
     },
     csst: {
-        rate: {{ json_encode($contribution->csst_rate / 100) }}
+        rate: {{ $contribution->csst_rate ?? 0 }}/100
     },
     fssq: {
-        rate: {{ json_encode($contribution->fss_rate / 100) }}
+        rate: {{ $contribution->fss_rate ?? 0 }}/100
     },
     cnt: {
-        rate: {{ json_encode($contribution->cnt_rate / 100) }},
-        max: {{ json_encode($contribution->cnt_max_salary) }}
+        rate: {{ $contribution->cnt_rate ?? 0 }}/100,
+        max: {{ $contribution->cnt_max_salary ?? 0 }}
     }
 };
-</script>
 
-<script>
+
+
+
   document.getElementById('addRowBtn').addEventListener('click', () => {
-  const tbody = document.querySelector('#employeeTable tbody');
-  const template = document.getElementById('employeeRowTemplate').content;
-  const clone = document.importNode(template, true);
-  tbody.appendChild(clone);
+    const tbody = document.querySelector('#employeeTable tbody');
+    const template = document.getElementById('employeeRowTemplate').content;
+    const clone = document.importNode(template, true);
+    tbody.appendChild(clone);
 
-  // Ajouter les listeners sur la nouvelle ligne
-  const row = tbody.lastElementChild;
-  row.querySelectorAll('input, select').forEach(input => {
-    input.addEventListener('input', () => calculateRow(row));
-  });
-  // Et initialiser les calculs
-  calculateRow(row);
+    // Ajouter les listeners sur la nouvelle ligne
+    const row = tbody.lastElementChild;
+    row.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('input', () => calculateEmployeeRow(input));
+    });
+
+    // Initialiser le calcul
+    const firstInput = row.querySelector('input') || row;
+    calculateEmployeeRow(firstInput);
 });
 window.addEventListener('DOMContentLoaded', () => {
     const entete = {
@@ -191,98 +195,120 @@ window.addEventListener('DOMContentLoaded', () => {
         calculateRow(row);
     });
 
-    function calculateRow(row) {
-        const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
-        const set = (name, val) => {
-            const el = row.querySelector(`[name="${name}"]`);
-            if (el) el.value = (+val).toFixed(2);
-        };
+   function calculateEmployeeRow(input) {
+    const row = input.closest('tr');
 
-        const hours = get('hours_worked_annual');
-        const weeks = get('weeks_worked') || 52;
-        const baseRate = get('hourly_rate');
-        const retirement = get('retirement_fund');
-        const bonus = get('bonus');
-        const insurance = get('group_insurance');
-        const vacationRate = get('vacation_rate');
-        const dividends = get('non_taxable_dividends');
+    // Fonctions utilitaires
+    const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
+    const set = (name, val) => {
+        const el = row.querySelector(`[name="${name}"]`);
+        if (el) el.value = (+val).toFixed(2);
+    };
 
-        const annualSalary = hours * baseRate;
-        const otherHourly = hours ? (retirement + bonus + insurance) / hours : 0;
-        const paidVacation = baseRate * (vacationRate / 100);
-        const paidLeave = hours
-            ? baseRate * entete.jours_feries * ((hours / weeks / 5) / hours)
-            : 0;
+    // 🔹 Récupération des données entêtes
+    const pourcentagePause = parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0);
+    const pourcentageTempsMort = parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0);
 
-        const adjustedRate = baseRate + otherHourly + paidVacation + paidLeave;
-        const baseForCot = adjustedRate * hours;
+    // Données saisies
+    const hours = get('hours_worked_annual');
+    const weeks = get('weeks_worked') || 52;
+    const hourlyRate = get('hourly_rate');
+    const retirement = get('retirement_fund');
+    const bonus = get('bonus');
+    const insurance = get('group_insurance');
+    const vacationRate = get('vacation_rate');
+    const dividends = get('non_taxable_dividends');
 
-        // Cotisations
-        const rrq = baseForCot > contributions.rrq.exemption
-            ? (Math.min(baseForCot, contributions.rrq.max) - contributions.rrq.exemption) * contributions.rrq.rate / hours
-            : 0;
-        const ae = baseForCot > contributions.ae.max
-            ? contributions.ae.max * contributions.ae.rate / hours
-            : adjustedRate * contributions.ae.rate;
-        const rqap = baseForCot > contributions.rqap.max
-            ? contributions.rqap.max * contributions.rqap.rate / hours
-            : adjustedRate * contributions.rqap.rate;
-        const csst = adjustedRate * contributions.csst.rate;
-        const fssq = adjustedRate * contributions.fssq.rate;
-        const cnt = baseForCot > contributions.cnt.max
-            ? contributions.cnt.max * contributions.cnt.rate / hours
-            : adjustedRate * contributions.cnt.rate;
+    // Calculs
+    const annualSalary = hours * hourlyRate;
+    const otherHourly = hours ? (retirement + bonus + insurance) / hours : 0;
+    const paidVacation = hourlyRate * (vacationRate / 100);
+    const paidLeave = hours ? hourlyRate * (weeks * 5 / hours) : 0;
+    const adjustedRate = hourlyRate + otherHourly + paidVacation + paidLeave;
+    const baseForContrib = adjustedRate * hours;
 
-        const totalContrib = rrq + ae + rqap + csst + fssq + cnt;
-        const rateBefore = adjustedRate + totalContrib;
-        const totalCost = rateBefore * hours;
+    // Cotisations
+    const rrq = baseForContrib > window.contributionRates.rrq.exemption
+        ? (Math.min(baseForContrib, window.contributionRates.rrq.max) - window.contributionRates.rrq.exemption) 
+            * window.contributionRates.rrq.rate / hours
+        : 0;
 
-        const pauseMin = entete.pourcentage_pause * 60;
-        const deadMin = entete.pourcentage_temps_mort * 60;
-        const totalNonProd = pauseMin + deadMin;
-        const prodTime = 60 - totalNonProd;
-        const prodPct = prodTime / 60 * 100;
+    const ae = baseForContrib > window.contributionRates.ae.max
+        ? window.contributionRates.ae.max * window.contributionRates.ae.rate / hours
+        : adjustedRate * window.contributionRates.ae.rate;
 
-        const dividendHourly = hours ? dividends / hours : 0;
-        const rateWithBurden = prodTime > 0
-            ? (rateBefore / prodTime) * 60 + dividendHourly
-            : 0;
-        const basePlusDiv = adjustedRate + dividendHourly;
-        const burdenPct = basePlusDiv > 0
-            ? (rateWithBurden / basePlusDiv - 1) * 100
-            : 0;
+    const rqap = baseForContrib > window.contributionRates.rqap.max
+        ? window.contributionRates.rqap.max * window.contributionRates.rqap.rate / hours
+        : adjustedRate * window.contributionRates.rqap.rate;
 
-        const hireDateStr = row.querySelector('[name="hire_date"]')?.value;
-        const seniority = hireDateStr
-            ? new Date().getFullYear() - new Date(hireDateStr).getFullYear() -
-              (new Date() < new Date(new Date().getFullYear(), new Date(hireDateStr).getMonth(), new Date(hireDateStr).getDate()) ? 1 : 0)
-            : 0;
+    const csst = adjustedRate * window.contributionRates.csst.rate;
+    const fssq = adjustedRate * window.contributionRates.fssq.rate;
 
-        // Mise à jour
-        set('annual_salary_base', annualSalary);
-        set('other_benefits_hourly', otherHourly);
-        set('paid_vacation', paidVacation);
-        set('paid_leave', paidLeave);
-        set('adjusted_hourly_rate', adjustedRate);
-        set('rrq', rrq);
-        set('ae', ae);
-        set('rqap', rqap);
-        set('csst', csst);
-        set('fssq', fssq);
-        set('cnt', cnt);
-        set('rate_before_downtime', rateBefore);
-        set('total_annual_cost', totalCost);
-        set('breaks_per_hour', pauseMin);
-        set('idle_time_per_hour', deadMin);
-        set('total_non_productive_time', totalNonProd);
-        set('productive_time', prodTime);
-        set('productive_time_percentage', prodPct);
-        set('rate_with_burden', rateWithBurden);
-        set('burden_percentage', burdenPct);
-        set('seniority', seniority);
+    const cnt = baseForContrib > window.contributionRates.cnt.max
+        ? window.contributionRates.cnt.max * window.contributionRates.cnt.rate / hours
+        : adjustedRate * window.contributionRates.cnt.rate;
 
-       
+    // Totaux
+    const totalContrib = rrq + ae + rqap + csst + fssq + cnt;
+    const rateBeforeDowntime = adjustedRate + totalContrib;
+    const totalAnnualCost = rateBeforeDowntime * hours;
+
+    // 🔹 Pauses et temps mort (calculé automatiquement depuis entête)
+    const breaksPerHour = pourcentagePause * 60;
+    const idleTimePerHour = pourcentageTempsMort * 60;
+    const totalNonProductive = breaksPerHour + idleTimePerHour;
+    const productiveTime = 60 - totalNonProductive;
+    const productivePercentage = productiveTime / 60 * 100;
+
+    // Taux avec fardeau
+    const dividendHourly = hours ? dividends / hours : 0;
+    const rateWithBurden = productiveTime > 0
+        ? (rateBeforeDowntime / productiveTime) * 60 + dividendHourly
+        : 0;
+
+    const basePlusDiv = adjustedRate + dividendHourly;
+    const burdenPercentage = basePlusDiv > 0
+        ? (rateWithBurden / basePlusDiv - 1) * 100
+        : 0;
+
+    // Ancienneté
+    const hireDateStr = row.querySelector('[name="hire_date"]')?.value;
+    const seniority = hireDateStr
+        ? new Date().getFullYear() - new Date(hireDateStr).getFullYear() -
+          (new Date() < new Date(new Date().getFullYear(), new Date(hireDateStr).getMonth(), new Date(hireDateStr).getDate()) ? 1 : 0)
+        : 0;
+
+    // Mise à jour des champs
+    set('annual_salary', annualSalary);
+    set('other_benefits_hourly', otherHourly);
+    set('paid_vacation', paidVacation);
+    set('paid_leave', paidLeave);
+    set('adjusted_hourly_rate', adjustedRate);
+    set('rrq', rrq);
+    set('ae', ae);
+    set('rqap', rqap);
+    set('csst', csst);
+    set('fssq', fssq);
+    set('cnt', cnt);
+    set('rate_before_downtime', rateBeforeDowntime);
+    set('total_annual_cost', totalAnnualCost);
+    set('breaks_per_hour', breaksPerHour);
+    set('idle_time_per_hour', idleTimePerHour);
+    set('total_non_productive_time', totalNonProductive);
+    set('productive_time', productiveTime);
+    set('productive_time_percentage', productivePercentage);
+    set('rate_with_burden', rateWithBurden);
+    set('burden_percentage', burdenPercentage);
+    set('seniority', seniority);
+}
+
+// Écoute globale pour déclencher les calculs
+document.addEventListener('input', (e) => {
+    if (e.target.closest('#employeeTable')) {
+        calculateEmployeeRow(e.target);
     }
+});
+
 
     async function saveRow(row) {
         const data = {};

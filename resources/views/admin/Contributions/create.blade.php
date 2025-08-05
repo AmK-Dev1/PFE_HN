@@ -110,11 +110,9 @@
                                         </div>
                                         <div class="form-group">
                                             <label>Taux Employé RQAP (%)</label>
-                                            <input type="number" step="0.001"  class="form-control" name="rqap_rate_employee">
+                                            <input type="number" step="0.0001"  class="form-control" name="rqap_rate_employee">
                                         </div>
-                                        <div class="form-group">
-                                            <label>Taux Employeur RQAP (%)</label>
-                                            <input type="number" step="0.001"   class="form-control" name="rqap_rate_employer">
+                                          
                                         </div>
                                          <!-- Champs cachés pour RQAP -->
                                          <input type="hidden" name="rqap_max_contribution" value="{{ old('rqap_max_contribution', 0) }}">
