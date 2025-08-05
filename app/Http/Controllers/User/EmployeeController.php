@@ -39,18 +39,31 @@ class EmployeeController extends Controller
                 ->make(true);
         }
 
-        $contribution = Contribution::first();
-        if (!$contribution) {
-            abort(500, 'La table "contributions" est vide.');
+        $constants = Contribution::whereNull('company_id')->orderByDesc('year')->first();
+        if (!$constants) {
+            abort(500, 'Les contributions globales ne sont pas définies.');
         }
+
+        $company = auth()->user()->companies()->first();
+        $csstContribution = null;
+
+        if ($company) {
+            $csstContribution = Contribution::where('company_id', $company->id)
+                                            ->whereNotNull('csst_rate')
+                                            ->orderByDesc('year')
+                                            ->first();
+        }
+
 
         return view('user.fardeauMO.employees.index', [
             'employees' => Employees::where('operation_type_id', $operationTypeId)->get(),
             'entetes' => EnteteActivite::where('operation_type_id', $operationTypeId)->get(),
             'operationTypes' => OperationType::all(),
-            'contribution' => $contribution, // hna ra7 nakhadmo part 2
-            'operationTypeId' => $operationTypeId, // utile pour la vue
+            'constants' => $constants,
+            'csstContribution' => $csstContribution,
+            'operationTypeId' => $operationTypeId,
         ]);
+
     }
 
 
