@@ -1,70 +1,71 @@
 @if(isset($employee))
 <tr data-id="{{ $employee->id }}">
-<td>
-    <input type="text"
-           class="form-control form-control-sm"
-           name="employee_name"
-           list="usersList"
-           placeholder="Nom employé (ou taper un nouveau)">
-</td>
-<td><input type="text" class="form-control form-control-sm" name="position"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="weeks_worked"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="vacation_rate"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="hourly_rate"></td>
+    <td>
+        <input type="text"
+               class="form-control form-control-sm"
+               name="employee_name"
+               list="usersList"
+               placeholder="Nom employé (ou taper un nouveau)"
+               value="{{ old('employee_name', $employee->employee_name) }}">
+    </td>
+    <td><input type="text" class="form-control form-control-sm" name="position" value="{{ old('position', $employee->position) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual" value="{{ old('hours_worked_annual', $employee->hours_worked_annual) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="weeks_worked" value="{{ old('weeks_worked', $employee->weeks_worked) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="vacation_rate" value="{{ old('vacation_rate', $employee->vacation_rate) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="hourly_rate" value="{{ old('hourly_rate', $employee->hourly_rate) }}"></td>
 
-<!-- 🔹 Calculé automatiquement -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="annual_salary" readonly></td>
+    <!-- 🔹 Calculé automatiquement -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="annual_salary" value="{{ old('annual_salary', $employee->annual_salary) }}" readonly></td>
 
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="retirement_fund"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="bonus"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="group_insurance"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="retirement_fund" value="{{ old('retirement_fund', $employee->retirement_fund) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="bonus" value="{{ old('bonus', $employee->bonus) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="group_insurance" value="{{ old('group_insurance', $employee->group_insurance) }}"></td>
 
-<!-- 🔹 Calculé automatiquement -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits_hourly" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_vacation" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_leave" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="adjusted_hourly_rate" readonly></td>
+    <!-- 🔹 Calculé automatiquement -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits_hourly" value="{{ old('other_benefits_hourly', $employee->other_benefits_hourly) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_vacation" value="{{ old('paid_vacation', $employee->paid_vacation) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="paid_leave" value="{{ old('paid_leave', $employee->paid_leave) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="adjusted_hourly_rate" value="{{ old('adjusted_hourly_rate', $employee->adjusted_hourly_rate) }}" readonly></td>
 
-<!-- 🔹 Cotisations calculées -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="rrq" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="ae" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="rqap" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="csst" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="fssq" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="cnt" readonly></td>
+    <!-- 🔹 Cotisations calculées -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="rrq" value="{{ old('rrq', $employee->rrq) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="ae" value="{{ old('ae', $employee->ae) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="rqap" value="{{ old('rqap', $employee->rqap) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="csst" value="{{ old('csst', $employee->csst) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="fssq" value="{{ old('fssq', $employee->fssq) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="cnt" value="{{ old('cnt', $employee->cnt) }}" readonly></td>
 
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="other_benefits" value="{{ old('other_benefits', $employee->other_benefits) }}"></td>
 
-<!-- 🔹 Calculs automatiques -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_before_downtime" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="total_annual_cost" readonly></td>
+    <!-- 🔹 Calculs automatiques -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_before_downtime" value="{{ old('rate_before_downtime', $employee->rate_before_downtime) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="total_annual_cost" value="{{ old('total_annual_cost', $employee->total_annual_cost) }}" readonly></td>
 
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="non_taxable_dividends"></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="breaks_per_hour"readonly ></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="idle_time_per_hour" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="non_taxable_dividends" value="{{ old('non_taxable_dividends', $employee->non_taxable_dividends) }}"></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="breaks_per_hour" value="{{ old('breaks_per_hour', $employee->breaks_per_hour) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="idle_time_per_hour" value="{{ old('idle_time_per_hour', $employee->idle_time_per_hour) }}" readonly></td>
 
-<!-- 🔹 Calculs automatiques -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="total_non_productive_time" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time_percentage" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_with_burden" readonly></td>
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="burden_percentage" readonly></td>
+    <!-- 🔹 Calculs automatiques -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="total_non_productive_time" value="{{ old('total_non_productive_time', $employee->total_non_productive_time) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time" value="{{ old('productive_time', $employee->productive_time) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time_percentage" value="{{ old('productive_time_percentage', $employee->productive_time_percentage) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_with_burden" value="{{ old('rate_with_burden', $employee->rate_with_burden) }}" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="burden_percentage" value="{{ old('burden_percentage', $employee->burden_percentage) }}" readonly></td>
 
-<td><input type="date" class="form-control form-control-sm" name="hire_date"></td>
+    <td><input type="date" class="form-control form-control-sm" name="hire_date" value="{{ old('hire_date', optional($employee->hire_date)->format('Y-m-d')) }}"></td>
 
-<!-- 🔹 Calculé -->
-<td><input type="number" step="0.01" class="form-control form-control-sm" name="seniority" readonly></td>
+    <!-- 🔹 Calculé -->
+    <td><input type="number" step="0.01" class="form-control form-control-sm" name="seniority" value="{{ old('seniority', $employee->seniority) }}" readonly></td>
 
-<td>
-    <div class="d-flex justify-content-center gap-1">
-        <button class="btn btn-success btn-sm btn-save-employee" title="Enregistrer">
-            <i class="fas fa-save"></i>
-        </button>
-        <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
-            <i class="fas fa-trash"></i>
-        </button>
-    </div>
-</td>
-
-@endif 
+    <td>
+        <div class="d-flex justify-content-center gap-1">
+            <button class="btn btn-success btn-sm btn-save-employee" title="Enregistrer">
+                <i class="fas fa-save"></i>
+            </button>
+            <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+@endif

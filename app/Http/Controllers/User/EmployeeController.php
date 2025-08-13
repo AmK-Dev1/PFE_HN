@@ -75,33 +75,33 @@ class EmployeeController extends Controller
         try {
             $validated = $this->validateEmployeeData($request);
 
-            // 🔎 Essayer de lier au User si le texte correspond (nom ou email)
-            $text = trim($validated['employee_name']);
-            $user = User::where('name', $text)->orWhere('email', $text)->first();
+            // (facultatif) liaison logique à un user, mais ta table n’a pas user_id ⇒ ne PAS persister
+            if (!empty($validated['employee_name'])) {
+                $text = trim($validated['employee_name']);
+                $user = User::where('name', $text)->orWhere('email', $text)->first();
+                // $validated['user_id'] = $user?->id; // ❌ ta table ne possède pas cette colonne
+            }
 
-            $validated['user_id'] = $user?->id;
-
-            // Valeurs par défaut
             $validated += [
                 'non_taxable_dividends' => $validated['non_taxable_dividends'] ?? 0,
                 'breaks_percent'        => $validated['breaks_percent'] ?? null,
                 'idle_percent'          => $validated['idle_percent'] ?? null,
             ];
 
-            // Calculs
             $this->calculateEmployeeCosts($validated);
 
-            // ✅ S’assurer d’avoir operation_type_id
             if (!$request->filled('operation_type_id')) {
-                $validated['operation_type_id'] = (int) $request->query('type'); // fallback URL ?type=
+                $validated['operation_type_id'] = (int) $request->query('type');
             }
+
+            // Nettoyage des champs non présents en DB
+            unset($validated['user_id'], $validated['breaks_percent'], $validated['idle_percent'], $validated['id'], $validated['annual_salary']);
 
             $employee = Employees::updateOrCreate(
                 ['id' => $request->id ?? null],
                 $validated
             );
 
-            // ♻️ Recompute recap automatiquement
             $recapResponse = app(RecapitulatifActiviteController::class)
                 ->recompute(new Request(['type' => $validated['operation_type_id']]));
             $recap = json_decode($recapResponse->getContent(), true);
@@ -113,18 +113,12 @@ class EmployeeController extends Controller
                 'recap'   => $recap['recap'] ?? ($recap['data'] ?? null),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors'  => $e->errors()
-            ], 422);
+            return response()->json(['success' => false,'message' => 'Erreur de validation','errors'  => $e->errors()], 422);
         } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur serveur : ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false,'message' => 'Erreur serveur : ' . $e->getMessage()], 500);
         }
     }
+
 
     /**
      * ✅ Enregistrement en masse de toutes les lignes du tableau
@@ -165,35 +159,37 @@ class EmployeeController extends Controller
 
         DB::transaction(function () use ($rows, $operationTypeId) {
             foreach ($rows as $row) {
-                // Contexte obligatoire
                 $row['operation_type_id'] = $operationTypeId;
 
-                // Liaison éventuelle à un user via nom/email saisi dans employee_name
-                if (!empty($row['employee_name'])) {
-                    $text = trim($row['employee_name']);
-                    $user = User::where('name', $text)->orWhere('email', $text)->first();
-                    $row['user_id'] = $user?->id;
-                }
+                // (facultatif) lookup User, mais NE PAS persister user_id (colonne absente)
+                // if (!empty($row['employee_name'])) {
+                //     $text = trim($row['employee_name']);
+                //     $user = User::where('name', $text)->orWhere('email', $text)->first();
+                //     $row['user_id'] = $user?->id; // ❌ colonne absente
+                // }
 
-                // Valeurs par défaut
                 $row += [
                     'non_taxable_dividends' => $row['non_taxable_dividends'] ?? 0,
                     'breaks_percent'        => $row['breaks_percent'] ?? null,
                     'idle_percent'          => $row['idle_percent'] ?? null,
                 ];
 
-                // Calculs (remplit annual_salary, contributions, productivité, etc.)
                 $this->calculateEmployeeCosts($row);
 
+                // Nettoyage avant persistance
+                unset($row['user_id'], $row['breaks_percent'], $row['idle_percent'], $row['annual_salary']);
+
                 if (!empty($row['id'])) {
-                    Employees::where('id', $row['id'])->update($row);
+                    $id = (int) $row['id'];
+                    unset($row['id']); // ⚠️ ne pas SET id=...
+                    Employees::where('id', $id)->update($row);
                 } else {
+                    unset($row['id']);
                     Employees::create($row);
                 }
             }
         });
 
-        // ♻️ Recompute recap automatiquement
         $recapResponse = app(RecapitulatifActiviteController::class)
             ->recompute(new Request(['type' => $operationTypeId]));
         $recap = json_decode($recapResponse->getContent(), true);
@@ -204,6 +200,7 @@ class EmployeeController extends Controller
             'recap'   => $recap['recap'] ?? ($recap['data'] ?? null),
         ]);
     }
+
 
     public function destroy($id)
     {
@@ -243,27 +240,26 @@ class EmployeeController extends Controller
         $contrib = Contribution::first();
         $rates   = $this->initializeContributionRates($contrib);
 
-        $hours = (float) $validated['hours_worked_annual'];
-        $rate  = (float) $validated['hourly_rate'];
+        $hours = (float) ($validated['hours_worked_annual'] ?? 0);
+        $rate  = (float) ($validated['hourly_rate'] ?? 0);
 
-        // Salaire annuel de base
+        // ---- salaire annuel base (dans ta DB: annual_salary_base)
         $annualSalaryBase = $hours * $rate;
+        $validated['annual_salary_base'] = $annualSalaryBase;
+        unset($validated['annual_salary']); // par sécurité
 
-        // On renseigne aussi 'annual_salary' (utilisé par les totaux/récap)
-        $validated['annual_salary']      = $annualSalaryBase;
-        $validated['annual_salary_base'] = $annualSalaryBase; // si tu tiens à garder ce champ
-
-        // Avantages autres convertis en taux horaire
+        // ---- autres avantages ($/h)
         $otherPerHour = ($hours > 0)
             ? (($validated['retirement_fund'] ?? 0)
-             + ($validated['bonus'] ?? 0)
-             + ($validated['group_insurance'] ?? 0)
-             + ($validated['other_benefits'] ?? 0)) / $hours
+            + ($validated['bonus'] ?? 0)
+            + ($validated['group_insurance'] ?? 0)
+            + ($validated['other_benefits'] ?? 0)) / $hours
             : 0;
 
-        // Vacances et congés payés (en $/heure)
+        // ---- vacances ($/h) et congés payés ($/h)
         $paidVacation = $rate * (($validated['vacation_rate'] ?? 0) / 100);
-        $paidLeave    = $rate * (($validated['paid_leave'] ?? 0) / 100);
+        // le front t’envoie déjà paid_leave en $/h ⇒ ne pas le re-multiplier
+        $paidLeave    = (float) ($validated['paid_leave'] ?? 0);
 
         $adjustedRate = $rate + $otherPerHour + $paidVacation + $paidLeave;
 
@@ -288,7 +284,12 @@ class EmployeeController extends Controller
             'adjusted_hourly_rate'       => $adjustedRate,
             'seniority'                  => $seniority,
         ], $contributions, $productivity, $burden);
+
+        // ⚠️ ces 3 champs ne sont PAS dans la DB — on les garde seulement pour le calcul,
+        // mais on ne doit PAS les persister
+        // (on les enlèvera juste avant create/update)
     }
+
 
     protected function initializeContributionRates($contrib)
     {

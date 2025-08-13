@@ -206,6 +206,7 @@ Route::controller(\App\Http\Controllers\User\EmployeeController::class)->group(f
     Route::put('/user/fardeauMO/employees/{id}', 'update')->name('user.fardeauMO.employees.update');
     Route::delete('/user/fardeauMO/employees/{id}', 'destroy')->name('user.fardeauMO.employees.destroy');
     Route::get('/user/fardeauMO/employees/{operationType}', 'index')->name('employees.byType');
+    Route::post('/user/fardeauMO/employees/bulk-save', 'bulkSave')->name('user.fardeauMO.employees.bulkSave');
 });
 
    Route::controller(\App\Http\Controllers\User\CoutCamionController::class)->group(function () {
@@ -224,7 +225,6 @@ Route::controller(\App\Http\Controllers\User\EnteteActiviteController::class)->g
     Route::post('/user/fardeauMO/entetes', 'store')->name('user.fardeauMO.entetes.store'); // AJAX store
     Route::put('/user/fardeauMO/entetes/{id}', 'update')->name('user.fardeauMO.entetes.update'); // AJAX update
     Route::delete('/user/fardeauMO/entetes/{id}', 'destroy')->name('user.fardeauMO.entetes.destroy'); // AJAX delete
-    Route::post('/user/fardeauMO/employees/bulk-save', 'bulkSave')->name('user.fardeauMO.employees.bulkSave');
     Route::post('/user/fardeauMO/entetes/store-ajax', 'storeFromAjax')->name('user.fardeauMO.entetes.storeAjax');
 });
 Route::post('/user/fardeauMO/entetes/store-ajax', [EnteteActiviteController::class, 'storeFromAjax'])

@@ -274,22 +274,16 @@
 
 @endsection
 
-
-
-
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 <script>
-  // Options users pour le select
+  // ====== TomSelect (inchangé, juste rangé) ======
   window.usersOptions = @json($users->map(fn($u)=>['value'=>$u->id,'text'=>$u->name]));
-  
-  // Initialise un select TomSelect dans UNE ligne
   function initEmployeeSelect(row){
     const select = row.querySelector('select[name="employee_token"]');
     const hidden = row.querySelector('input[name="employee_name"]');
     if(!select || select.tomselect) return;
 
-    // Injecte les options
     select.innerHTML = '';
     (window.usersOptions || []).forEach(opt=>{
       const o = document.createElement('option');
@@ -298,7 +292,7 @@
     });
 
     const ts = new TomSelect(select, {
-      create: true,              // autorise saisie libre
+      create: true,
       persist: false,
       maxItems: 1,
       valueField: 'value',
@@ -306,10 +300,8 @@
       searchField: 'text',
       placeholder: 'Choisir ou saisir un employé…',
       onInitialize(){
-        // Préremplir depuis data-employee-name si présent (lignes existantes)
         const name = row.dataset.employeeName?.trim();
         if(name){
-          // si name correspond à une option, sélectionne l’ID; sinon crée un item texte
           const match = (window.usersOptions||[]).find(o => o.text === name);
           if(match){
             this.addItem(match.value);
@@ -322,7 +314,6 @@
         }
       },
       onChange(value){
-        // value = id numérique OU texte libre
         const isId = /^\d+$/.test(String(value));
         if(isId){
           const opt = (window.usersOptions||[]).find(o => String(o.value)===String(value));
@@ -333,399 +324,293 @@
       }
     });
   }
-
-  // Initialise tous les selects sur la page au chargement
   document.addEventListener('DOMContentLoaded', ()=>{
     document.querySelectorAll('#employeeTable tbody tr').forEach(initEmployeeSelect);
   });
 </script>
 
 <script>
-    function calculateEmployeeRow(input) {
+  // ====== Constantes venant du backend (OK) ======
+  window.contributionRates = {
+    rrq: {
+      rate: {{ $constants->rrq_rate_employee ?? 0 }}/100,
+      exemption: {{ $constants->rrq_exemption ?? 0 }},
+      max: {{ $constants->rrq_max_salary ?? 0 }}
+    },
+    ae:  { rate: {{ $constants->ae_rate_employer ?? 0 }}/100,  max: {{ $constants->ae_max_salary ?? 0 }} },
+    rqap:{ rate: {{ $constants->rqap_rate_employee ?? 0 }}/100, max: {{ $constants->rqap_max_salary ?? 0 }} },
+    csst:{ rate: {{ $csstContribution?->csst_rate ?? 0 }}/100 },
+    fssq:{ rate: {{ $constants->fss_rate ?? 0 }}/100 },
+    cnt: { rate: {{ $constants->cnt_rate ?? 0 }}/100, max: {{ $constants->cnt_max_salary ?? 0 }} }
+  };
+  window.constantsDebug = @json($constants);
+  console.log('🔎 Constants from Laravel:', window.constantsDebug);
+</script>
+
+<script>
+  // ====== Verrouiller les champs calculés (read-only) ======
+  function lockComputedFields(row){
+    const fields = [
+      'annual_salary','other_benefits_hourly','paid_vacation','paid_leave',
+      'adjusted_hourly_rate','rrq','ae','rqap','csst','fssq','cnt',
+      'rate_before_downtime','total_annual_cost',
+      'breaks_per_hour','idle_time_per_hour','total_non_productive_time',
+      'productive_time','productive_time_percentage',
+      'rate_with_burden','burden_percentage','seniority'
+    ];
+    fields.forEach(n => {
+      const el = row.querySelector(`[name="${n}"]`);
+      if (el) { el.readOnly = true; el.classList.add('bg-light'); }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('#employeeTable tbody tr').forEach(lockComputedFields);
+  });
+</script>
+
+<script>
+  // ====== Calcul d’une ligne employé (corrigé) ======
+  function calculateEmployeeRow(input) {
     const row = input.closest('tr');
     if (!row) return;
 
-    // Fonctions utilitaires
+    // Helpers
     const get = name => {
-        const el = row.querySelector(`[name="${name}"]`);
-        return el ? parseFloat(el.value) || 0 : 0;
+      const el = row.querySelector(`[name="${name}"]`);
+      if (!el) return 0;
+      const raw = (el.value || "").toString().replace(/\s/g, '').replace(',', '.');
+      const n = parseFloat(raw);
+      return isFinite(n) ? n : 0;
     };
-    
     const set = (name, value) => {
-        const el = row.querySelector(`[name="${name}"]`);
-        if (el) el.value = value !== undefined ? value.toFixed(2) : '';
+      const el = row.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      if (value === null || typeof value === 'undefined' || isNaN(value)) {
+        el.value = '';
+      } else {
+        el.value = Number(value).toFixed(2);
+      }
     };
 
-    // Récupération des entêtes
-    const joursFeries = parseFloat(document.querySelector('[name="jours_feries"]')?.value || 0);
-    const pourcentagePause = parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0);
-    const pourcentageTempsMort = parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0);
+    // Entêtes
+    const joursFeries         = parseFloat(document.querySelector('[name="jours_feries"]')?.value || 0);
+    const pourcentagePause    = parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0);
+    const pourcentageTempsMort= parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0);
 
     // Données employé
-    const employeeName = row.querySelector('[name="employee_name"]')?.value;
-    const hours = get('hours_worked_annual');
-    const weeks = get('weeks_worked') || 52;
-    const hourlyRate = get('hourly_rate');
+    const employeeName = (row.querySelector('[name="employee_name"]')?.value || '').trim();
+    const hours        = get('hours_worked_annual');
+    const weeks        = get('weeks_worked') || 52;
+    const hourlyRate   = get('hourly_rate');
     const vacationRate = get('vacation_rate');
-    const retirement = get('retirement_fund');
-    const bonus = get('bonus');
-    const insurance = get('group_insurance');
-    const dividends = get('non_taxable_dividends');
+    const retirement   = get('retirement_fund');
+    const bonus        = get('bonus');
+    const insurance    = get('group_insurance');
+    const dividends    = get('non_taxable_dividends');
 
-    // 1. Salaire annuel
-    set('annual_salary', hours * hourlyRate);
+    // 1) Salaire annuel
+    const annualSalary = hours * hourlyRate;
+    set('annual_salary', annualSalary);
 
-    // 2. Autres avantages ($/h)
-    set('other_benefits_hourly', hours ? (retirement + bonus + insurance) / hours : 0);
+    // 2) Autres avantages ($/h) = (retraite + boni + assurance)/heures
+    const otherHourly = hours > 0 ? (retirement + bonus + insurance) / hours : 0;
+    set('other_benefits_hourly', otherHourly);
 
-    // 3. Vacances payées ($/h)
-    set('paid_vacation', hourlyRate * (vacationRate / 100));
+    // 3) Vacances payées ($/h)
+    const paidVacation = hourlyRate * (vacationRate / 100);
+    set('paid_vacation', paidVacation);
 
-   // 4. Congé payé ($/h) - Version finale optimisée
+    // 4) Congé payé ($/h)
+    const paidLeave = (hourlyRate *  joursFeries * (((hours/weeks)/5)/hours));
+    set('paid_leave', paidLeave);
 
-
-const paidLeave =(hourlyRate *  joursFeries*(((hours/weeks)/5)/hours));
-set('paid_leave', paidLeave);
-
-    // 5. Taux horaire corrigé
+    // 5) Taux horaire corrigé
     const adjustedRate = hourlyRate + get('other_benefits_hourly') + get('paid_vacation') + paidLeave;
     set('adjusted_hourly_rate', adjustedRate);
 
-    // 6. Cotisations (simplifiées pour l'exemple)
-    const baseForContrib = adjustedRate * hours;
-    
-    // RRQ
-    let rrq = 0;
-    if (baseForContrib > window.contributionRates.rrq.exemption) {
-        rrq = (Math.min(baseForContrib, window.contributionRates.rrq.max) - window.contributionRates.rrq.exemption) 
-            * window.contributionRates.rrq.rate / hours;
-    }
-    set('rrq', rrq);
+    // ===== Cotisations par heure =====
+    const contrib = window.contributionRates || {};
 
-    // 7. Taux avant pauses
-    const rateBeforeDowntime = adjustedRate + rrq + get('ae') + get('rqap') + get('csst') + get('fssq') + get('cnt');
-    set('rate_before_downtime', rateBeforeDowntime);
-
-    // 8. Coût annuel
-    set('total_annual_cost', rateBeforeDowntime * hours);
-
-    //// Calcul des minutes de pause et temps mort par heure
-const breaksPerHour = (pourcentagePause * 60)/100; // 6.4% de 60 minutes = 3.84 minutes
-const idleTimePerHour = (pourcentageTempsMort * 60)/100;
-
-// Temps non productif et productif
-const totalNonProductive = breaksPerHour + idleTimePerHour;
-const productiveTime = 60 - totalNonProductive;
-const productivePercentage = (productiveTime / 60) * 100;
-
-// Mise à jour des champs
-set('breaks_per_hour', breaksPerHour);
-set('idle_time_per_hour', idleTimePerHour);
-set('total_non_productive_time', totalNonProductive);
-set('productive_time', productiveTime);
-set('productive_time_percentage', productivePercentage);
-    // 10. Taux avec fardeau
-    const dividendHourly = hours ? dividends / hours : 0;
-    const rateWithBurden = get('productive_time') > 0 
-        ? (rateBeforeDowntime / get('productive_time')) * 60 + dividendHourly 
-        : 0;
-    set('rate_with_burden', rateWithBurden);
-
-    // 11. Fardeau (%)
-    const burdenPercentage = (hourlyRate + dividendHourly) > 0 
-        ? ((rateWithBurden / (hourlyRate + dividendHourly)) - 1) * 100 
-        : 0;
-    set('burden_percentage', burdenPercentage);
-
-    // 12. Ancienneté
-    const hireDate = row.querySelector('[name="hire_date"]')?.value;
-    if (hireDate) {
-        const hireYear = new Date(hireDate).getFullYear();
-        const currentYear = new Date().getFullYear();
-        set('seniority', currentYear - hireYear);
-    }
-
-
-        // Mise à jour des champs
-        safeSet(row, 'annual_salary', annualSalary);
-        safeSet(row, 'other_benefits_hourly', otherHourly);
-        safeSet(row, 'paid_vacation', paidVacation);
-        safeSet(row, 'paid_leave', paidLeave);
-        safeSet(row, 'adjusted_hourly_rate', adjustedRate);
-        safeSet(row, 'rrq', rrq);
-        safeSet(row, 'ae', ae);
-        safeSet(row, 'rqap', rqap);
-        safeSet(row, 'csst', csst);
-        safeSet(row, 'fssq', fssq);
-        safeSet(row, 'cnt', cnt);
-        safeSet(row, 'rate_before_downtime', rateBeforeDowntime);
-        safeSet(row, 'total_annual_cost', totalAnnualCost);
-        safeSet(row, 'breaks_per_hour', breaksPerHour);
-        safeSet(row, 'idle_time_per_hour', idleTimePerHour);
-        safeSet(row, 'total_non_productive_time', totalNonProductive);
-        safeSet(row, 'productive_time', productiveTime);
-        safeSet(row, 'productive_time_percentage', productivePercentage);
-        safeSet(row, 'rate_with_burden', rateWithBurden);
-        safeSet(row, 'burden_percentage', burdenPercentage);
-        safeSet(row, 'seniority', seniority);
-
-    }
-
-
-</script>
-<script>
-
-    window.contributionRates = {
-        rrq: {
-            rate: {{ $constants->rrq_rate_employee ?? 0 }}/100,
-            exemption: {{ $constants->rrq_exemption ?? 0 }},
-            max: {{ $constants->rrq_max_salary ?? 0 }}
-        },
-        ae: {
-            rate: {{ $constants->ae_rate_employer ?? 0 }}/100,
-            max: {{ $constants->ae_max_salary ?? 0 }}
-        },
-        rqap: {
-            rate: {{ $constants->rqap_rate_employee ?? 0 }}/100,
-            max: {{ $constants->rqap_max_salary ?? 0 }}
-        },
-        csst: {
-            rate: {{ $csstContribution?->csst_rate ?? 0 }}/100
-        },
-        fssq: {
-            rate: {{ $constants->fss_rate ?? 0 }}/100
-        },
-        cnt: {
-            rate: {{ $constants->cnt_rate ?? 0 }}/100,
-            max: {{ $constants->cnt_max_salary ?? 0 }}
-        }
+    // petit helper: écrire en 4 décimales (ou vide)
+    const set4 = (name, v) => {
+      const el = row.querySelector(`[name="${name}"]`);
+      if (!el) return;
+      if (v === null || typeof v === 'undefined' || isNaN(v)) el.value = '';
+      else el.value = Number(v).toFixed(2);
     };
 
-    // Appliquer les valeurs par défaut aux lignes existantes (si le champ est vide)
-    document.addEventListener('DOMContentLoaded', () => {
-        const constantMap = {
-            rrq: (window.contributionRates.rrq.rate * 100).toFixed(2),
-            ae: (window.contributionRates.ae.rate * 100).toFixed(2),
-            rqap: (window.contributionRates.rqap.rate * 100).toFixed(2),
-            csst: (window.contributionRates.csst.rate * 100).toFixed(2),
-            fssq: (window.contributionRates.fssq.rate * 100).toFixed(2),
-            cnt: (window.contributionRates.cnt.rate * 100).toFixed(2),
-        };
+    const gainsAnnuels = adjustedRate * hours;
 
-        const rows = document.querySelectorAll('#employeeTable tbody tr');
-        rows.forEach(row => {
-            Object.entries(constantMap).forEach(([key, value]) => {
-                const input = row.querySelector(`[name="${key}"]`);
-                if (input && !input.value) input.value = value;
-            });
+    // --- RRQ ($/h) ---
+    let rrq = null;
+    {
+      const cfg = contrib.rrq || { rate:0, exemption:0, max:0 };
+      const exemption = Number(cfg.exemption || 0);
+      const maxGains  = Number(cfg.max || 0);
+      const rate      = Number(cfg.rate || 0); // décimal
 
-            // Appliquer le calcul
-            const firstInput = row.querySelector('input');
-            if (firstInput) {
-                calculateEmployeeRow(firstInput);
-            }
-        });
+      if (adjustedRate > 0 && hours > 0) {
+        if (gainsAnnuels < exemption) {
+          rrq = null;
+        } else if (maxGains && gainsAnnuels > maxGains) {
+          const maxContr = Math.max(0, (maxGains - exemption) * rate);
+          rrq = maxContr / hours;
+        } else {
+          rrq = ((gainsAnnuels - exemption) / hours) * rate;
+        }
+      }
+      set4('rrq', rrq);
+    }
+
+    // --- AE ($/h) ---
+    // on utilise le taux employeur disponible et on plafonne via max salaire (si fourni)
+    let ae = null;
+    {
+      const cfg = contrib.ae || { rate:0, max:0 };
+      const rate = Number(cfg.rate || 0);
+      const maxSalary = Number(cfg.max || 0);       // salaire max assurable
+      if (adjustedRate > 0 && hours > 0) {
+        const annTheorique = adjustedRate * rate * hours;           // contribution annuelle théorique
+        const annPlafond   = maxSalary ? (rate * maxSalary) : Infinity; // cotisation max annuelle (si on a max salaire)
+        const annRetenue   = Math.min(annTheorique, annPlafond);
+        ae = annRetenue / hours;
+      }
+      set4('ae', ae);
+    }
+
+    // --- RQAP ($/h) ---
+    let rqap = null;
+    {
+      const cfg = contrib.rqap || { rate:0, max:0 };
+      const rate = Number(cfg.rate || 0);          // si tu as un taux employeur séparé, remplace ici
+      const maxSalary = Number(cfg.max || 0);
+      if (adjustedRate > 0 && hours > 0) {
+        if (maxSalary && gainsAnnuels > maxSalary) {
+          const annMax = rate * maxSalary;         // cotisation max annuelle
+          rqap = annMax / hours;
+        } else {
+          rqap = adjustedRate * rate;              // base par heure
+        }
+      }
+      set4('rqap', rqap);
+    }
+
+    // --- CSST ($/h) ---
+    let csst = null;
+    {
+      const cfg = contrib.csst || { rate:0 };
+      const rate = Number(cfg.rate || 0);
+      if (adjustedRate > 0) csst = adjustedRate * rate;
+      set4('csst', csst);
+    }
+
+    // --- FSSQ ($/h) ---
+    let fssq = null;
+    {
+      const cfg = contrib.fssq || { rate:0 };
+      const rate = Number(cfg.rate || 0);
+      if (adjustedRate > 0) fssq = adjustedRate * rate;
+      set4('fssq', fssq);
+    }
+
+    // --- CNT ($/h) ---
+    let cnt = null;
+    {
+      const cfg = contrib.cnt || { rate:0, max:0 };
+      const rate = Number(cfg.rate || 0);
+      const maxSalary = Number(cfg.max || 0);   // salaire max assurable CNT
+      if (adjustedRate > 0 && hours > 0) {
+        if (maxSalary && gainsAnnuels > maxSalary) {
+          const annMax = rate * maxSalary;      // cotisation max annuelle (si on n'a que salaire max et taux)
+          cnt = annMax / hours;
+        } else {
+          cnt = adjustedRate * rate;            // base horaire
+        }
+      }
+      set4('cnt', cnt);
+    }
+
+    // 7) Taux avant pauses
+    const rateBeforeDowntime =
+      adjustedRate +
+      (rrq || 0) + (get('ae') || 0) + (get('rqap') || 0) + (get('csst') || 0) + (get('fssq') || 0) + (get('cnt') || 0);
+    set('rate_before_downtime', rateBeforeDowntime);
+
+    // 8) Coût annuel total
+    set('total_annual_cost', rateBeforeDowntime * hours);
+
+    // 9) Pauses & temps mort
+    const breaksPerHour = (pourcentagePause * 60)/100;
+    const idleTimePerHour = (pourcentageTempsMort * 60)/100;
+    const totalNonProductive = breaksPerHour + idleTimePerHour;
+    const productiveTime = 60 - totalNonProductive;
+    const productivePercentage = (productiveTime / 60) * 100;
+
+    set('breaks_per_hour', breaksPerHour);
+    set('idle_time_per_hour', idleTimePerHour);
+    set('total_non_productive_time', totalNonProductive);
+    set('productive_time', productiveTime);
+    set('productive_time_percentage', productivePercentage);
+
+    // 10) Taux avec fardeau
+    const dividendHourly = hours ? dividends / hours : 0;
+    const rateWithBurden = productiveTime > 0 ? (rateBeforeDowntime / productiveTime) * 60 + dividendHourly : 0;
+    set('rate_with_burden', rateWithBurden);
+
+    // 11) Fardeau (%)
+    const baseForBurden = hourlyRate + dividendHourly;
+    const burdenPercentage = baseForBurden > 0 ? ((rateWithBurden / baseForBurden) - 1) * 100 : 0;
+    set('burden_percentage', burdenPercentage);
+
+    // 12) Ancienneté
+    const hireDate = row.querySelector('[name="hire_date"]')?.value;
+    if (hireDate) {
+      const hireYear = new Date(hireDate).getFullYear();
+      const currentYear = new Date().getFullYear();
+      set('seniority', currentYear - hireYear);
+    }
+  }
+
+  // Écoute globale : recalcul live
+  document.addEventListener('input', (e) => {
+    if (e.target.closest('#employeeTable')) {
+      calculateEmployeeRow(e.target);
+    }
+  });
+
+  // Calcul initial des lignes existantes
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('#employeeTable tbody tr input').forEach(inp=>{
+      calculateEmployeeRow(inp);
     });
+  });
+</script>
 
-    
-
-
-
-    document.getElementById('addRowBtn').addEventListener('click', () => {
+<script>
+  // ====== Ajout de ligne (ordre corrigé, pas de pré-remplissage qui écrase) ======
+  document.getElementById('addRowBtn').addEventListener('click', () => {
     const tbody = document.querySelector('#employeeTable tbody');
     const template = document.getElementById('employeeRowTemplate').content;
     const clone = document.importNode(template, true);
     tbody.appendChild(clone);
-    initEmployeeSelect(row);
 
-    const row = tbody.lastElementChild;
+    const row = tbody.lastElementChild;     // ✅ d’abord on définit row
+    initEmployeeSelect(row);                 // ✅ ensuite on l’utilise
+    lockComputedFields(row);                 // ✅ rendre calculés en read-only
 
-    // 🎯 AJOUT ICI – PRÉREMPLIR AVEC LES CONSTANTES
-    const constantMap = {
-        rrq: (window.contributionRates.rrq.rate * 100).toFixed(2),
-        ae: (window.contributionRates.ae.rate * 100).toFixed(2),
-        rqap: (window.contributionRates.rqap.rate * 100).toFixed(2),
-        csst: (window.contributionRates.csst.rate * 100).toFixed(2),
-        fssq: (window.contributionRates.fssq.rate * 100).toFixed(2),
-            cnt: (window.contributionRates.cnt.rate * 100).toFixed(2),
-        };
-
-        Object.entries(constantMap).forEach(([key, value]) => {
-            const input = row.querySelector(`[name="${key}"]`);
-            if (input) input.value = value;
-        });
-
-        // Ajouter les listeners sur la nouvelle ligne
-        row.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('input', () => calculateEmployeeRow(input));
-        });
-
-        row.querySelectorAll('input').forEach(input => {
-            calculateEmployeeRow(input); // ← pour déclencher le calcul complet une fois la ligne insérée
-        });
-        
-        // Initialiser le calcul
-        const firstInput = row.querySelector('input') || row;
-        calculateEmployeeRow(firstInput);
+    // Listeners
+    row.querySelectorAll('input, select').forEach(input => {
+      input.addEventListener('input', () => calculateEmployeeRow(input));
     });
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const entete = {
-            jours_feries: parseFloat(document.querySelector('[name="jours_feries"]')?.value || 0),
-            pourcentage_pause: parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0),
-            pourcentage_temps_mort: parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0),
-        };
-    const contributions = window.contributionRates;
-
-    // Initialise calculs et écouteurs
-    const rows = document.querySelectorAll('#employeeTable tbody tr');
-    rows.forEach(row => {
-        row.querySelectorAll('input, select').forEach(input =>
-            input.addEventListener('input', () => calculateRow(row))
-        );
-        calculateRow(row);
-    });
-
-    // Écoute globale pour déclencher les calculs
-    document.addEventListener('input', (e) => {
-        if (e.target.closest('#employeeTable')) {
-            calculateEmployeeRow(e.target);
-        }
-    });
-
-
-        async function saveRow(row) {
-            const data = {};
-            row.querySelectorAll('input, select').forEach(el => {
-                if (el.name) data[el.name] = el.value;
-            });
-            data.id = row.dataset.id || null;
-            
-
-            try {
-                const res = await fetch('{{ route("user.fardeauMO.employees.store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(data)
-                });
-                const json = await res.json();
-                if (res.ok && json.id) {
-                    row.dataset.id = json.id;
-                    alert('Enregistré!');
-                } else {
-                    console.warn('Erreur enregistrement', json.message);
-                }
-            } catch (e) {
-                console.error('Erreur AJAX', e);
-            }
-        }
-
-        document.addEventListener('click', async e => {
-            if (e.target.closest('.btn-save-employee')) {
-                await saveRow(e.target.closest('tr'));
-            }
-
-            if (e.target.closest('.btn-delete-employee')) {
-                const row = e.target.closest('tr');
-                const id = row.dataset.id;
-                if (!id) {
-                    row.remove();
-                    return;
-                }
-                const res = await fetch(`/user/fardeauMO/employees/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                });
-                if (res.ok) {
-                    row.remove();
-                    alert('Supprimé');
-                } else {
-                    alert('Erreur suppression');
-                }
-            }
-        });
-    });
-
-    function calculateEntetePercentages(element) {
-        console.log("------------------------------------")
-        const row = element.closest('tr');
-
-        const pauseMinutes = parseFloat(row.querySelector('[name="minutes_pause"]')?.value || 0);
-        const deadMinutes = parseFloat(row.querySelector('[name="minutes_temps_mort"]')?.value || 0);
-
-        const totalMinutesInDay = 8 * 60;
-
-        const pourcentagePause = (pauseMinutes / totalMinutesInDay) *100;
-        const pourcentageTempsMort = (deadMinutes / totalMinutesInDay) * 100;
-
-        row.querySelector('[name="pourcentage_pause"]').value = pourcentagePause.toFixed(2);
-        row.querySelector('[name="pourcentage_temps_mort"]').value = pourcentageTempsMort.toFixed(2);
-    }
-
-</script>
-
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-        // Fonction pour mettre à jour les pourcentages dans chaque ligne
-        function updatePercentagesForRow(row) {
-            const pause = parseFloat(row.querySelector('[name="minutes_pause"]')?.value || 0);
-            const mort = parseFloat(row.querySelector('[name="minutes_temps_mort"]')?.value || 0);
-            const totalMin = 8 * 60;
-
-            const pausePct = (pause / totalMin) * 100;
-            const mortPct = (mort / totalMin) * 100;
-
-            const pauseField = row.querySelector('[name="pourcentage_pause"]');
-            const mortField = row.querySelector('[name="pourcentage_temps_mort"]');
-            if (pauseField) pauseField.value = pausePct.toFixed(2);
-            if (mortField) mortField.value = mortPct.toFixed(2);
-        }
-
-        // Fonction principale de mise à jour des totaux
-        function updateEnteteTotals() {
-            let totalJoursFeries = 0;
-            let totalMinutesPause = 0;
-            let totalMinutesTempsMort = 0;
-            let totalPourcentagePause = 0;
-            let totalPourcentageTempsMort = 0;
-            let count = 0;
-
-            document.querySelectorAll('#enteteTable tbody tr').forEach(row => {
-                updatePercentagesForRow(row); // Toujours recalculer les %
-                const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
-
-                totalJoursFeries += get('jours_feries');
-                totalMinutesPause += get('minutes_pause');
-                totalMinutesTempsMort += get('minutes_temps_mort');
-                totalPourcentagePause += get('pourcentage_pause');
-                totalPourcentageTempsMort += get('pourcentage_temps_mort');
-                count++;
-            });
-
-            document.getElementById('totalJoursFeries').innerText = totalJoursFeries.toFixed(2);
-            document.getElementById('totalMinutesPause').innerText = totalMinutesPause.toFixed(2);
-            document.getElementById('totalMinutesTempsMort').innerText = totalMinutesTempsMort.toFixed(2);
-            document.getElementById('totalPourcentagePause').innerText = count ? (totalPourcentagePause / count).toFixed(2) : '0';
-            document.getElementById('totalPourcentageTempsMort').innerText = count ? (totalPourcentageTempsMort / count).toFixed(2) : '0';
-        }
-
-        // Écoute globale : déclenche update dès qu’un input est modifié dans le tableau
-        document.querySelector('#enteteTable').addEventListener('input', () => {
-            updateEnteteTotals();
-        });
-
-        // Appel initial
-        updateEnteteTotals();
-    });
+    // Premier calcul
+    const firstInput = row.querySelector('input') || row;
+    calculateEmployeeRow(firstInput);
+  });
 </script>
 
 <script>
-    document.addEventListener('click', async e => {
+document.addEventListener('click', async e => {
         if (e.target.closest('.btn-save-entete')) {
             const row = e.target.closest('tr');
 
@@ -779,168 +664,207 @@ set('productive_time_percentage', productivePercentage);
             }
         }
     });
-</script>
+  // ====== Récap & totaux (inchangé) ======
+  (function(){
+    const table = document.getElementById('employeeTable');
+    const tbody = table?.querySelector('tbody');
 
-<script>
-    window.constantsDebug = @json($constants);
-    console.log('🔎 Constants from Laravel:', window.constantsDebug);
-</script>
-
-
-
-@endpush
-@push('scripts')
-<script>
-// --- Shims inoffensifs pour éviter des erreurs existantes ---
-if (typeof window.initEmployeeSelect === 'function') {
-  const __origInit = window.initEmployeeSelect;
-  window.initEmployeeSelect = function(row) {
-    if (!row) return; // ton code appelait initEmployeeSelect(row) avant la définition de row
-    try { return __origInit(row); } catch(e) { console.warn(e); }
-  };
-}
-if (typeof window.calculateRow !== 'function') {
-  window.calculateRow = function(row){
-    const first = row?.querySelector('input');
-    if (first && typeof window.calculateEmployeeRow === 'function') {
-      window.calculateEmployeeRow(first);
+    function num(v){ const n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? 0 : n; }
+    function fmt(n){ return Number(n).toFixed(2); }
+    function sumInputsByName(name){
+      let s = 0;
+      tbody?.querySelectorAll(`tr [name="${name}"]`).forEach(inp => { s += num(inp.value); });
+      return s;
     }
-  };
-}
-if (typeof window.safeSet !== 'function') {
-  window.safeSet = function(row, name, value) {
-    const el = row?.querySelector?.(`[name="${name}"]`);
-    if (!el) return;
-    const n = parseFloat(value);
-    el.value = isNaN(n) ? (value ?? '') : Number(n).toFixed(2);
-  };
-}
-// évite ReferenceError pour des variables non définies référencées dans safeSet(...)
-['annualSalary','otherHourly','totalAnnualCost','ae','rqap','csst','fssq','cnt','seniority',
- 'paidVacation','paidLeave','adjustedRate','rateBeforeDowntime','breaksPerHour',
- 'idleTimePerHour','totalNonProductive','productiveTime','productivePercentage','rateWithBurden','burdenPercentage'
-].forEach(k => { if (typeof window[k] === 'undefined') window[k] = 0; });
 
-// --- Totaux & Récap ---
-(function(){
-  const table = document.getElementById('employeeTable');
-  const tbody = table?.querySelector('tbody');
+    function recalcTotalsUI(){
+      if (!tbody) return;
+      const sHours = sumInputsByName('hours_worked_annual');
+      const sSal   = sumInputsByName('annual_salary');
+      const sCost  = sumInputsByName('total_annual_cost');
+
+      const elH = document.getElementById('sum-hours_worked_annual');
+      const elS = document.getElementById('sum-annual_salary');
+      const elC = document.getElementById('sum-total_annual_cost');
+      if (elH) elH.textContent = fmt(sHours);
+      if (elS) elS.textContent = fmt(sSal);
+      if (elC) elC.textContent = fmt(sCost);
+
+      const recap = {
+        total_heures: sHours,
+        salaire_total: sSal,
+        cout_total: sCost,
+
+        vacances_total: sumInputsByName('paid_vacation'),
+        avantages_sociaux_total: sumInputsByName('other_benefits_hourly'),
+
+        rrq_total: sumInputsByName('rrq'),
+        ae_total: sumInputsByName('ae'),
+        rqap_total: sumInputsByName('rqap'),
+        cnt_total: sumInputsByName('cnt'),
+        fssq_total: sumInputsByName('fssq'),
+        csst_total: sumInputsByName('csst'),
+
+        boni_total: sumInputsByName('bonus'),
+        assurance_groupe_total: sumInputsByName('group_insurance'),
+      };
+
+      recap.total_general =
+        recap.salaire_total +
+        recap.vacances_total +
+        recap.avantages_sociaux_total +
+        recap.boni_total +
+        recap.assurance_groupe_total;
+
+      [
+        'total_heures','salaire_total','cout_total',
+        'vacances_total','avantages_sociaux_total',
+        'rrq_total','ae_total','rqap_total','cnt_total','fssq_total','csst_total',
+        'boni_total','assurance_groupe_total','total_general'
+      ].forEach(k => {
+        const el = document.getElementById('recap-' + k);
+        if (el) el.textContent = fmt(recap[k] || 0);
+      });
+    }
+
+    document.addEventListener('input', (e) => {
+      if (e.target.closest('#employeeTable')) recalcTotalsUI();
+    });
+    document.addEventListener('DOMContentLoaded', recalcTotalsUI);
+  })();
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+        // Fonction pour mettre à jour les pourcentages dans chaque ligne
+        function updatePercentagesForRow(row) {
+            const pause = parseFloat(row.querySelector('[name="minutes_pause"]')?.value || 0);
+            const mort = parseFloat(row.querySelector('[name="minutes_temps_mort"]')?.value || 0);
+            const totalMin = 8 * 60;
+
+            const pausePct = (pause / totalMin) * 100;
+            const mortPct = (mort / totalMin) * 100;
+
+            const pauseField = row.querySelector('[name="pourcentage_pause"]');
+            const mortField = row.querySelector('[name="pourcentage_temps_mort"]');
+            if (pauseField) pauseField.value = pausePct.toFixed(2);
+            if (mortField) mortField.value = mortPct.toFixed(2);
+        }
+
+        // Fonction principale de mise à jour des totaux
+        function updateEnteteTotals() {
+            let totalJoursFeries = 0;
+            let totalMinutesPause = 0;
+            let totalMinutesTempsMort = 0;
+            let totalPourcentagePause = 0;
+            let totalPourcentageTempsMort = 0;
+            let count = 0;
+
+            document.querySelectorAll('#enteteTable tbody tr').forEach(row => {
+                updatePercentagesForRow(row); // Toujours recalculer les %
+                const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
+
+                totalJoursFeries += get('jours_feries');
+                totalMinutesPause += get('minutes_pause');
+                totalMinutesTempsMort += get('minutes_temps_mort');
+                totalPourcentagePause += get('pourcentage_pause');
+                totalPourcentageTempsMort += get('pourcentage_temps_mort');
+                count++;
+            });
+
+            document.getElementById('totalJoursFeries').innerText = totalJoursFeries.toFixed(2);
+            document.getElementById('totalMinutesPause').innerText = totalMinutesPause.toFixed(2);
+            document.getElementById('totalMinutesTempsMort').innerText = totalMinutesTempsMort.toFixed(2);
+            document.getElementById('totalPourcentagePause').innerText = count ? (totalPourcentagePause / count).toFixed(2) : '0';
+            document.getElementById('totalPourcentageTempsMort').innerText = count ? (totalPourcentageTempsMort / count).toFixed(2) : '0';
+        }
+
+        // Écoute globale : déclenche update dès qu’un input est modifié dans le tableau
+        document.querySelector('#enteteTable').addEventListener('input', () => {
+            updateEnteteTotals();
+        });
+
+        // Appel initial
+        updateEnteteTotals();
+    });
+
+
+    /* === Enregistrer tout (bulk save) === */
+(function () {
+  const tbody = document.querySelector('#employeeTable tbody');
+
+  const num = (v) => {
+    const n = parseFloat(String(v).replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+  };
 
   function getOpType() {
     const hid = document.getElementById('operationTypeId');
-    if (hid && hid.value) return hid.value;
-    return new URLSearchParams(location.search).get('type') || '';
-  }
-  function num(v){ const n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? 0 : n; }
-  function fmt(n){ return Number(n).toFixed(2); }
-  function sumInputsByName(name){
-    let s = 0;
-    tbody?.querySelectorAll(`tr [name="${name}"]`).forEach(inp => { s += num(inp.value); });
-    return s;
+    return (hid && hid.value) || new URLSearchParams(location.search).get('type') || 0;
   }
 
-  function recalcTotalsUI(){
+  async function saveAllRows() {
     if (!tbody) return;
 
-    // Ligne <tfoot>
-    const sHours = sumInputsByName('hours_worked_annual');      // Col 3
-    const sSal   = sumInputsByName('annual_salary');            // Col 7
-    const sCost  = sumInputsByName('total_annual_cost');        // Col 23
-
-    const elH = document.getElementById('sum-hours_worked_annual');
-    const elS = document.getElementById('sum-annual_salary');
-    const elC = document.getElementById('sum-total_annual_cost');
-    if (elH) elH.textContent = fmt(sHours);
-    if (elS) elS.textContent = fmt(sSal);
-    if (elC) elC.textContent = fmt(sCost);
-
-    // Récap vertical (somme de chaque colonne)
-    const recap = {
-      total_heures: sHours,
-      salaire_total: sSal,
-      cout_total: sCost,
-
-      vacances_total: sumInputsByName('paid_vacation'),
-      avantages_sociaux_total: sumInputsByName('other_benefits_hourly'),
-
-      rrq_total: sumInputsByName('rrq'),
-      ae_total: sumInputsByName('ae'),
-      rqap_total: sumInputsByName('rqap'),
-      cnt_total: sumInputsByName('cnt'),
-      fssq_total: sumInputsByName('fssq'),
-      csst_total: sumInputsByName('csst'),
-
-      boni_total: sumInputsByName('bonus'),
-      assurance_groupe_total: sumInputsByName('group_insurance'),
-      // ccq_total: sumInputsByName('ccq') // décommente si tu ajoutes la colonne
-    };
-
-    // Total général (règle métier fournie : on exclut heures, coût total et cotisations)
-    recap.total_general =
-      recap.salaire_total +
-      recap.vacances_total +
-      recap.avantages_sociaux_total +
-      recap.boni_total +
-      recap.assurance_groupe_total; // + (recap.ccq_total || 0)
-
-    // Affichage récap
-    const ids = [
-      'total_heures','salaire_total','cout_total',
-      'vacances_total','avantages_sociaux_total',
-      'rrq_total','ae_total','rqap_total','cnt_total','fssq_total','csst_total',
-      'boni_total','assurance_groupe_total','total_general'
-    ];
-    ids.forEach(k => {
-      const el = document.getElementById('recap-' + k);
-      if (el) el.textContent = fmt(recap[k] || 0);
-    });
-  }
-
-  // Recalc en direct + initial
-  document.addEventListener('input', (e) => {
-    if (e.target.closest('#employeeTable')) recalcTotalsUI();
-  });
-  document.addEventListener('DOMContentLoaded', recalcTotalsUI);
-
-  // --- Enregistrer tout ---
-  async function saveAllRows(){
-    if (!tbody) return;
-    const opType = getOpType();
+    // On sérialise CHAQUE input/select/textarea de chaque tr
     const rows = [];
-
-    tbody.querySelectorAll('tr').forEach(tr => {
+    tbody.querySelectorAll('tr').forEach((tr, i) => {
       const row = {};
+      // garder l'id si déjà en DB (ou input hidden "id")
       const id = tr.dataset.id || tr.querySelector('input[name="id"]')?.value || null;
       if (id) row.id = id;
 
-      tr.querySelectorAll('input, select, textarea').forEach(el => {
+      tr.querySelectorAll('input, select, textarea').forEach((el) => {
         if (!el.name) return;
-        row[el.name] = (el.type === 'number') ? num(el.value) : el.value;
+        // num pour type=number, sinon string
+        row[el.name] = el.type === 'number' ? num(el.value) : el.value;
       });
+
       rows.push(row);
     });
 
     try {
       const res = await fetch(`{{ route('user.fardeauMO.employees.bulkSave') }}`, {
         method: 'POST',
+        credentials: 'same-origin',         
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ operation_type_id: Number(opType || 0), rows })
+        body: JSON.stringify({
+          operation_type_id: Number(getOpType() || 0),
+          rows
+        })
       });
-      const data = await res.json();
+
+      let data, text;
+      try {
+        data = await res.json();
+      } catch {
+        text = await res.text();
+      }
 
       if (!res.ok) {
-        console.error('Bulk save error:', data);
-        alert('❌ Erreur à l’enregistrement');
+        console.error('Bulk save error:', data || text);
+        const msg = (data && (data.message || data.errors)) ? JSON.stringify(data) : (text || 'Erreur serveur');
+        alert('❌ Erreur à l’enregistrement\n' + msg);
         return;
       }
 
-      // Met à jour le récap depuis la réponse serveur (si présent)
-      if (data?.recap) updateRecapFromServer(data.recap);
 
-      recalcTotalsUI();
+      // Optionnel: si l’API renvoie les ids mis à jour, on les pousse dans les <tr>
+      // Attendu: data.rows = [{client_index: 0, id: 123}, ...] OU data.ids = [123,124,...]
+      if (Array.isArray(data?.rows)) {
+        const trs = tbody.querySelectorAll('tr');
+        data.rows.forEach((r) => {
+          const idx = r.client_index ?? null;
+          if (idx !== null && trs[idx]) trs[idx].dataset.id = r.id;
+        });
+      } else if (Array.isArray(data?.ids)) {
+        const trs = tbody.querySelectorAll('tr');
+        data.ids.forEach((id, i) => { if (trs[i]) trs[i].dataset.id = id; });
+      }
+
       alert('✅ Toutes les lignes ont été enregistrées');
     } catch (err) {
       console.error(err);
@@ -948,26 +872,15 @@ if (typeof window.safeSet !== 'function') {
     }
   }
 
-  function updateRecapFromServer(rc){
-    const ids = [
-      'total_heures','salaire_total','cout_total',
-      'vacances_total','avantages_sociaux_total',
-      'rrq_total','ae_total','rqap_total','cnt_total','fssq_total','csst_total',
-      'boni_total','assurance_groupe_total','ccq_total','total_general'
-    ];
-    ids.forEach(k => {
-      const el = document.getElementById('recap-' + k);
-      if (!el) return;
-      const v = rc?.[k];
-      if (v === undefined || v === null) return;
-      el.textContent = fmt(v);
-    });
-  }
-
+  // Bouton
   document.getElementById('saveAllBtn')?.addEventListener('click', saveAllRows);
-})();
+  })();
+
 </script>
 @endpush
+
+
+
 
 
 
