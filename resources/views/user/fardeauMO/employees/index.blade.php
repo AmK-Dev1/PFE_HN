@@ -12,6 +12,7 @@
 @endphp
 
 @push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css">
     <style>
         /* Réduction générale des inputs */
         input.form-control-sm {
@@ -47,6 +48,7 @@
         .btn-sm i {
             font-size: 0.8rem;
         }
+        
     </style>
 @endpush
 
@@ -55,6 +57,13 @@
 
 <div class="app-content content">
     <div class="content-wrapper">
+         {{-- ✅ Liste déroulante des utilisateurs --}}
+        <datalist id="usersList">
+            @foreach($users as $u)
+                <option value="{{ $u->name }}"></option>
+                
+            @endforeach
+        </datalist>
         <div class="content-header row mb-2">
             <div class="col-12">
                 <h2 class="content-header-title">Fardeau de la Main-d’Œuvre</h2>
@@ -73,9 +82,14 @@
         {{-- 🟨 Employés --}}
         <div class="d-flex justify-content-end mb-2">
             <button id="addRowBtn" type="button" class="btn btn-primary btn-sm">
-                + Ajouter une ligne
+                + 
             </button>
+            <button id="saveAllBtn" type="button" class="btn btn-success btn-sm ms-1">
+                 Enregistrer tout
+            </button>
+             <input type="hidden" id="operationTypeId" value="{{ $operationTypeId }}">
         </div>
+        
 
         <div class="table-responsive">
             <table id="employeeTable" class="table table-borderless text-center align-middle">
@@ -123,13 +137,58 @@
                         @include('user.fardeauMO.partials.employee-row', ['employee' => $employee])
                     @endforeach
                 </tbody>
+                <tfoot>
+  <tr class="bg-light fw-bold">
+    <td class="text-start">Totaux :</td>   <!-- 1: libellé -->
+    <td></td>                               <!-- 2 -->
+    <td class="text-end" id="sum-hours_worked_annual">0.00</td>  <!-- 3 -->
+    <td></td>                               <!-- 4 -->
+    <td></td>                               <!-- 5 -->
+    <td></td>                               <!-- 6 -->
+    <td class="text-end" id="sum-annual_salary">0.00</td>        <!-- 7 -->
+    <td></td>                               <!-- 8 -->
+    <td></td>                               <!-- 9 -->
+    <td></td>                               <!-- 10 -->
+    <td></td>                               <!-- 11 -->
+    <td></td>                               <!-- 12 -->
+    <td></td>                               <!-- 13 -->
+    <td></td>                               <!-- 14 -->
+    <td></td>                               <!-- 15 -->
+    <td></td>                               <!-- 16 -->
+    <td></td>                               <!-- 17 -->
+    <td></td>                               <!-- 18 -->
+    <td></td>                               <!-- 19 -->
+    <td></td>                               <!-- 20 -->
+    <td></td>                               <!-- 21 -->
+    <td></td>                               <!-- 22 -->
+    <td class="text-end" id="sum-total_annual_cost">0.00</td>    <!-- 23 -->
+    <td></td>                               <!-- 24 -->
+    <td></td>                               <!-- 25 -->
+    <td></td>                               <!-- 26 -->
+    <td></td>                               <!-- 27 -->
+    <td></td>                               <!-- 28 -->
+    <td></td>                               <!-- 29 -->
+    <td></td>                               <!-- 30 -->
+    <td></td>                               <!-- 31 -->
+    <td></td>                               <!-- 32 -->
+    <td></td>                               <!-- 33 -->
+    <td></td>                               <!-- 34 (Actions) -->
+  </tr>
+</tfoot>
+
             </table>
         </div>
 
         {{-- Template pour ajout dynamique --}}
         <template id="employeeRowTemplate">
     <tr>
-    <td><input type="text" class="form-control form-control-sm" name="employee_name"></td>
+    <td>
+    <input type="text"
+           class="form-control form-control-sm"
+           name="employee_name"
+           list="usersList"
+           placeholder="Nom employé (ou taper un nouveau)">
+</td>
     <td><input type="text" class="form-control form-control-sm" name="position"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="weeks_worked"></td>
@@ -153,120 +212,239 @@
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_before_downtime"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="total_annual_cost"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="non_taxable_dividends"></td>
-    <td><input type="number" step="0.01" class="form-control form-control-sm" name="breaks_per_hour"></td>
-    <td><input type="number" step="0.01" class="form-control form-control-sm" name="idle_time_per_hour"></td>
-    <td><input type="number" step="0.01" class="form-control form-control-sm" name="total_non_productive_time"></td>
-    <td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time"></td>
-    <td><input type="number" step="0.01" class="form-control form-control-sm" name="productive_time_percentage"></td>
+    <td><input type="number" step="0.1" class="form-control form-control-sm" name="breaks_per_hour"></td>
+    <td><input type="number" step="0.1" class="form-control form-control-sm" name="idle_time_per_hour"></td>
+    <td><input type="number" step="0.1" class="form-control form-control-sm" name="total_non_productive_time"></td>
+    <td><input type="number" step="0.1" class="form-control form-control-sm" name="productive_time"></td>
+    <td><input type="number" step="0.1" class="form-control form-control-sm" name="productive_time_percentage"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="rate_with_burden"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="burden_percentage"></td>
     <td><input type="date" class="form-control form-control-sm" name="hire_date"></td>
     <td><input type="number" step="0.01" class="form-control form-control-sm" name="seniority"></td>
     <td>
-        <div class="d-flex justify-content-center gap-1">
-            <button class="btn btn-success btn-sm btn-save-employee" title="Enregistrer">
-                <i class="fas fa-save"></i>
-            </button>
-            <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
+        <td>
+  <div class="d-flex justify-content-center gap-1">
+    <button class="btn btn-danger btn-sm btn-delete-employee" title="Supprimer">
+      <i class="fas fa-trash"></i>
+    </button>
+  </div>
+</td>
     </td>
         </tr>
     </template>
     </div>
 </div>
+<div class="card mt-3">
+  <div class="card-header"><strong>Récapitulatif</strong></div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <table class="table table-borderless mb-0">
+          <tbody>
+            <tr><td>Heures travaillées</td><td class="text-end"><span id="recap-total_heures">0.00</span> h</td></tr>
+            <tr><td><strong>Salaire annuel de base</strong></td><td class="text-end"><strong><span id="recap-salaire_total">0.00</span> $</strong></td></tr>
+            <tr><td>Vacances payées</td><td class="text-end"><span id="recap-vacances_total">0.00</span> $</td></tr>
+            <tr><td>Avantages sociaux (autres $/h)</td><td class="text-end"><span id="recap-avantages_sociaux_total">0.00</span> $</td></tr>
+
+            <tr><td>RRQ</td><td class="text-end"><span id="recap-rrq_total">0.00</span> $</td></tr>
+            <tr><td>AE</td><td class="text-end"><span id="recap-ae_total">0.00</span> $</td></tr>
+            <tr><td>RQAP</td><td class="text-end"><span id="recap-rqap_total">0.00</span> $</td></tr>
+            <tr><td>CNT</td><td class="text-end"><span id="recap-cnt_total">0.00</span> $</td></tr>
+            <tr><td>FSSQ</td><td class="text-end"><span id="recap-fssq_total">0.00</span> $</td></tr>
+            <tr><td>CSST</td><td class="text-end"><span id="recap-csst_total">0.00</span> $</td></tr>
+
+            <tr><td>Boni</td><td class="text-end"><span id="recap-boni_total">0.00</span> $</td></tr>
+            <tr><td>Assurance Groupe</td><td class="text-end"><span id="recap-assurance_groupe_total">0.00</span> $</td></tr>
+
+            <tr class="border-top">
+              <td><strong>Total général</strong></td>
+              <td class="text-end"><strong><span id="recap-total_general">0.00</span> $</strong></td>
+            </tr>
+
+            <tr class="border-top">
+              <td><strong>Coût annuel total (somme)</strong></td>
+              <td class="text-end"><strong><span id="recap-cout_total">0.00</span> $</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 
 
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+<script>
+  // Options users pour le select
+  window.usersOptions = @json($users->map(fn($u)=>['value'=>$u->id,'text'=>$u->name]));
+  
+  // Initialise un select TomSelect dans UNE ligne
+  function initEmployeeSelect(row){
+    const select = row.querySelector('select[name="employee_token"]');
+    const hidden = row.querySelector('input[name="employee_name"]');
+    if(!select || select.tomselect) return;
+
+    // Injecte les options
+    select.innerHTML = '';
+    (window.usersOptions || []).forEach(opt=>{
+      const o = document.createElement('option');
+      o.value = opt.value; o.textContent = opt.text;
+      select.appendChild(o);
+    });
+
+    const ts = new TomSelect(select, {
+      create: true,              // autorise saisie libre
+      persist: false,
+      maxItems: 1,
+      valueField: 'value',
+      labelField: 'text',
+      searchField: 'text',
+      placeholder: 'Choisir ou saisir un employé…',
+      onInitialize(){
+        // Préremplir depuis data-employee-name si présent (lignes existantes)
+        const name = row.dataset.employeeName?.trim();
+        if(name){
+          // si name correspond à une option, sélectionne l’ID; sinon crée un item texte
+          const match = (window.usersOptions||[]).find(o => o.text === name);
+          if(match){
+            this.addItem(match.value);
+            hidden.value = match.text;
+          }else{
+            this.addOption({value:name, text:name});
+            this.addItem(name);
+            hidden.value = name;
+          }
+        }
+      },
+      onChange(value){
+        // value = id numérique OU texte libre
+        const isId = /^\d+$/.test(String(value));
+        if(isId){
+          const opt = (window.usersOptions||[]).find(o => String(o.value)===String(value));
+          hidden.value = opt ? opt.text : '';
+        }else{
+          hidden.value = value || '';
+        }
+      }
+    });
+  }
+
+  // Initialise tous les selects sur la page au chargement
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('#employeeTable tbody tr').forEach(initEmployeeSelect);
+  });
+</script>
 
 <script>
     function calculateEmployeeRow(input) {
-        const row = input.closest('tr');
+    const row = input.closest('tr');
+    if (!row) return;
 
-        // Fonctions utilitaires
-        const get = name => parseFloat(row.querySelector(`[name="${name}"]`)?.value || 0);
-        function safeSet(row, name, val) {
-            const el = row.querySelector(`[name="${name}"]`);
-            if (el && !el.value) el.value = (+val).toFixed(2);
-        }
+    // Fonctions utilitaires
+    const get = name => {
+        const el = row.querySelector(`[name="${name}"]`);
+        return el ? parseFloat(el.value) || 0 : 0;
+    };
+    
+    const set = (name, value) => {
+        const el = row.querySelector(`[name="${name}"]`);
+        if (el) el.value = value !== undefined ? value.toFixed(2) : '';
+    };
+
+    // Récupération des entêtes
+    const joursFeries = parseFloat(document.querySelector('[name="jours_feries"]')?.value || 0);
+    const pourcentagePause = parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0);
+    const pourcentageTempsMort = parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0);
+
+    // Données employé
+    const employeeName = row.querySelector('[name="employee_name"]')?.value;
+    const hours = get('hours_worked_annual');
+    const weeks = get('weeks_worked') || 52;
+    const hourlyRate = get('hourly_rate');
+    const vacationRate = get('vacation_rate');
+    const retirement = get('retirement_fund');
+    const bonus = get('bonus');
+    const insurance = get('group_insurance');
+    const dividends = get('non_taxable_dividends');
+
+    // 1. Salaire annuel
+    set('annual_salary', hours * hourlyRate);
+
+    // 2. Autres avantages ($/h)
+    set('other_benefits_hourly', hours ? (retirement + bonus + insurance) / hours : 0);
+
+    // 3. Vacances payées ($/h)
+    set('paid_vacation', hourlyRate * (vacationRate / 100));
+
+   // 4. Congé payé ($/h) - Version finale optimisée
 
 
-        // 🔹 Récupération des données entêtes
-        const pourcentagePause = parseFloat(document.querySelector('[name="pourcentage_pause"]')?.value || 0);
-        const pourcentageTempsMort = parseFloat(document.querySelector('[name="pourcentage_temps_mort"]')?.value || 0);
+const paidLeave =(hourlyRate *  joursFeries*(((hours/weeks)/5)/hours));
+set('paid_leave', paidLeave);
 
-        // Données saisies
-        const hours = get('hours_worked_annual');
-        const weeks = get('weeks_worked') || 52;
-        const hourlyRate = get('hourly_rate');
-        const retirement = get('retirement_fund');
-        const bonus = get('bonus');
-        const insurance = get('group_insurance');
-        const vacationRate = get('vacation_rate');
-        const dividends = get('non_taxable_dividends');
+    // 5. Taux horaire corrigé
+    const adjustedRate = hourlyRate + get('other_benefits_hourly') + get('paid_vacation') + paidLeave;
+    set('adjusted_hourly_rate', adjustedRate);
 
-        // Calculs
-        const annualSalary = hours * hourlyRate;
-        const otherHourly = hours ? (retirement + bonus + insurance) / hours : 0;
-        const paidVacation = hourlyRate * (vacationRate / 100);
-        const paidLeave = hours ? hourlyRate * (weeks * 5 / hours) : 0;
-        const adjustedRate = hourlyRate + otherHourly + paidVacation + paidLeave;
-        const baseForContrib = adjustedRate * hours;
+    // 6. Cotisations (simplifiées pour l'exemple)
+    const baseForContrib = adjustedRate * hours;
+    
+    // RRQ
+    let rrq = 0;
+    if (baseForContrib > window.contributionRates.rrq.exemption) {
+        rrq = (Math.min(baseForContrib, window.contributionRates.rrq.max) - window.contributionRates.rrq.exemption) 
+            * window.contributionRates.rrq.rate / hours;
+    }
+    set('rrq', rrq);
 
-        // Cotisations
-        const rrq = baseForContrib > window.contributionRates.rrq.exemption
-            ? (Math.min(baseForContrib, window.contributionRates.rrq.max) - window.contributionRates.rrq.exemption) 
-                * window.contributionRates.rrq.rate / hours
-            : 0;
+    // 7. Taux avant pauses
+    const rateBeforeDowntime = adjustedRate + rrq + get('ae') + get('rqap') + get('csst') + get('fssq') + get('cnt');
+    set('rate_before_downtime', rateBeforeDowntime);
 
-        const ae = baseForContrib > window.contributionRates.ae.max
-            ? window.contributionRates.ae.max * window.contributionRates.ae.rate / hours
-            : adjustedRate * window.contributionRates.ae.rate;
+    // 8. Coût annuel
+    set('total_annual_cost', rateBeforeDowntime * hours);
 
-        const rqap = baseForContrib > window.contributionRates.rqap.max
-            ? window.contributionRates.rqap.max * window.contributionRates.rqap.rate / hours
-            : adjustedRate * window.contributionRates.rqap.rate;
+    //// Calcul des minutes de pause et temps mort par heure
+const breaksPerHour = (pourcentagePause * 60)/100; // 6.4% de 60 minutes = 3.84 minutes
+const idleTimePerHour = (pourcentageTempsMort * 60)/100;
 
-        const csst = adjustedRate * window.contributionRates.csst.rate;
-        const fssq = adjustedRate * window.contributionRates.fssq.rate;
+// Temps non productif et productif
+const totalNonProductive = breaksPerHour + idleTimePerHour;
+const productiveTime = 60 - totalNonProductive;
+const productivePercentage = (productiveTime / 60) * 100;
 
-        const cnt = baseForContrib > window.contributionRates.cnt.max
-            ? window.contributionRates.cnt.max * window.contributionRates.cnt.rate / hours
-            : adjustedRate * window.contributionRates.cnt.rate;
+// Mise à jour des champs
+set('breaks_per_hour', breaksPerHour);
+set('idle_time_per_hour', idleTimePerHour);
+set('total_non_productive_time', totalNonProductive);
+set('productive_time', productiveTime);
+set('productive_time_percentage', productivePercentage);
+    // 10. Taux avec fardeau
+    const dividendHourly = hours ? dividends / hours : 0;
+    const rateWithBurden = get('productive_time') > 0 
+        ? (rateBeforeDowntime / get('productive_time')) * 60 + dividendHourly 
+        : 0;
+    set('rate_with_burden', rateWithBurden);
 
-        // Totaux
-        const totalContrib = rrq + ae + rqap + csst + fssq + cnt;
-        const rateBeforeDowntime = adjustedRate + totalContrib;
-        const totalAnnualCost = rateBeforeDowntime * hours;
+    // 11. Fardeau (%)
+    const burdenPercentage = (hourlyRate + dividendHourly) > 0 
+        ? ((rateWithBurden / (hourlyRate + dividendHourly)) - 1) * 100 
+        : 0;
+    set('burden_percentage', burdenPercentage);
 
-        // 🔹 Pauses et temps mort (calculé automatiquement depuis entête)
-        const breaksPerHour = pourcentagePause * 60;
-        const idleTimePerHour = pourcentageTempsMort * 60;
-        const totalNonProductive = breaksPerHour + idleTimePerHour;
-        const productiveTime = 60 - totalNonProductive;
-        const productivePercentage = productiveTime / 60 * 100;
+    // 12. Ancienneté
+    const hireDate = row.querySelector('[name="hire_date"]')?.value;
+    if (hireDate) {
+        const hireYear = new Date(hireDate).getFullYear();
+        const currentYear = new Date().getFullYear();
+        set('seniority', currentYear - hireYear);
+    }
 
-        // Taux avec fardeau
-        const dividendHourly = hours ? dividends / hours : 0;
-        const rateWithBurden = productiveTime > 0
-            ? (rateBeforeDowntime / productiveTime) * 60 + dividendHourly
-            : 0;
-
-        const basePlusDiv = adjustedRate + dividendHourly;
-        const burdenPercentage = basePlusDiv > 0
-            ? (rateWithBurden / basePlusDiv - 1) * 100
-            : 0;
-
-        // Ancienneté
-        const hireDateStr = row.querySelector('[name="hire_date"]')?.value;
-        const seniority = hireDateStr
-            ? new Date().getFullYear() - new Date(hireDateStr).getFullYear() -
-            (new Date() < new Date(new Date().getFullYear(), new Date(hireDateStr).getMonth(), new Date(hireDateStr).getDate()) ? 1 : 0)
-            : 0;
 
         // Mise à jour des champs
         safeSet(row, 'annual_salary', annualSalary);
@@ -358,6 +536,7 @@
     const template = document.getElementById('employeeRowTemplate').content;
     const clone = document.importNode(template, true);
     tbody.appendChild(clone);
+    initEmployeeSelect(row);
 
     const row = tbody.lastElementChild;
 
@@ -421,6 +600,7 @@
                 if (el.name) data[el.name] = el.value;
             });
             data.id = row.dataset.id || null;
+            
 
             try {
                 const res = await fetch('{{ route("user.fardeauMO.employees.store") }}', {
@@ -478,7 +658,7 @@
 
         const totalMinutesInDay = 8 * 60;
 
-        const pourcentagePause = (pauseMinutes / totalMinutesInDay) * 100;
+        const pourcentagePause = (pauseMinutes / totalMinutesInDay) *100;
         const pourcentageTempsMort = (deadMinutes / totalMinutesInDay) * 100;
 
         row.querySelector('[name="pourcentage_pause"]').value = pourcentagePause.toFixed(2);
@@ -607,7 +787,188 @@
 </script>
 
 
+
 @endpush
+@push('scripts')
+<script>
+// --- Shims inoffensifs pour éviter des erreurs existantes ---
+if (typeof window.initEmployeeSelect === 'function') {
+  const __origInit = window.initEmployeeSelect;
+  window.initEmployeeSelect = function(row) {
+    if (!row) return; // ton code appelait initEmployeeSelect(row) avant la définition de row
+    try { return __origInit(row); } catch(e) { console.warn(e); }
+  };
+}
+if (typeof window.calculateRow !== 'function') {
+  window.calculateRow = function(row){
+    const first = row?.querySelector('input');
+    if (first && typeof window.calculateEmployeeRow === 'function') {
+      window.calculateEmployeeRow(first);
+    }
+  };
+}
+if (typeof window.safeSet !== 'function') {
+  window.safeSet = function(row, name, value) {
+    const el = row?.querySelector?.(`[name="${name}"]`);
+    if (!el) return;
+    const n = parseFloat(value);
+    el.value = isNaN(n) ? (value ?? '') : Number(n).toFixed(2);
+  };
+}
+// évite ReferenceError pour des variables non définies référencées dans safeSet(...)
+['annualSalary','otherHourly','totalAnnualCost','ae','rqap','csst','fssq','cnt','seniority',
+ 'paidVacation','paidLeave','adjustedRate','rateBeforeDowntime','breaksPerHour',
+ 'idleTimePerHour','totalNonProductive','productiveTime','productivePercentage','rateWithBurden','burdenPercentage'
+].forEach(k => { if (typeof window[k] === 'undefined') window[k] = 0; });
+
+// --- Totaux & Récap ---
+(function(){
+  const table = document.getElementById('employeeTable');
+  const tbody = table?.querySelector('tbody');
+
+  function getOpType() {
+    const hid = document.getElementById('operationTypeId');
+    if (hid && hid.value) return hid.value;
+    return new URLSearchParams(location.search).get('type') || '';
+  }
+  function num(v){ const n = parseFloat(String(v).replace(',','.')); return isNaN(n) ? 0 : n; }
+  function fmt(n){ return Number(n).toFixed(2); }
+  function sumInputsByName(name){
+    let s = 0;
+    tbody?.querySelectorAll(`tr [name="${name}"]`).forEach(inp => { s += num(inp.value); });
+    return s;
+  }
+
+  function recalcTotalsUI(){
+    if (!tbody) return;
+
+    // Ligne <tfoot>
+    const sHours = sumInputsByName('hours_worked_annual');      // Col 3
+    const sSal   = sumInputsByName('annual_salary');            // Col 7
+    const sCost  = sumInputsByName('total_annual_cost');        // Col 23
+
+    const elH = document.getElementById('sum-hours_worked_annual');
+    const elS = document.getElementById('sum-annual_salary');
+    const elC = document.getElementById('sum-total_annual_cost');
+    if (elH) elH.textContent = fmt(sHours);
+    if (elS) elS.textContent = fmt(sSal);
+    if (elC) elC.textContent = fmt(sCost);
+
+    // Récap vertical (somme de chaque colonne)
+    const recap = {
+      total_heures: sHours,
+      salaire_total: sSal,
+      cout_total: sCost,
+
+      vacances_total: sumInputsByName('paid_vacation'),
+      avantages_sociaux_total: sumInputsByName('other_benefits_hourly'),
+
+      rrq_total: sumInputsByName('rrq'),
+      ae_total: sumInputsByName('ae'),
+      rqap_total: sumInputsByName('rqap'),
+      cnt_total: sumInputsByName('cnt'),
+      fssq_total: sumInputsByName('fssq'),
+      csst_total: sumInputsByName('csst'),
+
+      boni_total: sumInputsByName('bonus'),
+      assurance_groupe_total: sumInputsByName('group_insurance'),
+      // ccq_total: sumInputsByName('ccq') // décommente si tu ajoutes la colonne
+    };
+
+    // Total général (règle métier fournie : on exclut heures, coût total et cotisations)
+    recap.total_general =
+      recap.salaire_total +
+      recap.vacances_total +
+      recap.avantages_sociaux_total +
+      recap.boni_total +
+      recap.assurance_groupe_total; // + (recap.ccq_total || 0)
+
+    // Affichage récap
+    const ids = [
+      'total_heures','salaire_total','cout_total',
+      'vacances_total','avantages_sociaux_total',
+      'rrq_total','ae_total','rqap_total','cnt_total','fssq_total','csst_total',
+      'boni_total','assurance_groupe_total','total_general'
+    ];
+    ids.forEach(k => {
+      const el = document.getElementById('recap-' + k);
+      if (el) el.textContent = fmt(recap[k] || 0);
+    });
+  }
+
+  // Recalc en direct + initial
+  document.addEventListener('input', (e) => {
+    if (e.target.closest('#employeeTable')) recalcTotalsUI();
+  });
+  document.addEventListener('DOMContentLoaded', recalcTotalsUI);
+
+  // --- Enregistrer tout ---
+  async function saveAllRows(){
+    if (!tbody) return;
+    const opType = getOpType();
+    const rows = [];
+
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const row = {};
+      const id = tr.dataset.id || tr.querySelector('input[name="id"]')?.value || null;
+      if (id) row.id = id;
+
+      tr.querySelectorAll('input, select, textarea').forEach(el => {
+        if (!el.name) return;
+        row[el.name] = (el.type === 'number') ? num(el.value) : el.value;
+      });
+      rows.push(row);
+    });
+
+    try {
+      const res = await fetch(`{{ route('user.fardeauMO.employees.bulkSave') }}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ operation_type_id: Number(opType || 0), rows })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Bulk save error:', data);
+        alert('❌ Erreur à l’enregistrement');
+        return;
+      }
+
+      // Met à jour le récap depuis la réponse serveur (si présent)
+      if (data?.recap) updateRecapFromServer(data.recap);
+
+      recalcTotalsUI();
+      alert('✅ Toutes les lignes ont été enregistrées');
+    } catch (err) {
+      console.error(err);
+      alert('❌ Impossible de communiquer avec le serveur');
+    }
+  }
+
+  function updateRecapFromServer(rc){
+    const ids = [
+      'total_heures','salaire_total','cout_total',
+      'vacances_total','avantages_sociaux_total',
+      'rrq_total','ae_total','rqap_total','cnt_total','fssq_total','csst_total',
+      'boni_total','assurance_groupe_total','ccq_total','total_general'
+    ];
+    ids.forEach(k => {
+      const el = document.getElementById('recap-' + k);
+      if (!el) return;
+      const v = rc?.[k];
+      if (v === undefined || v === null) return;
+      el.textContent = fmt(v);
+    });
+  }
+
+  document.getElementById('saveAllBtn')?.addEventListener('click', saveAllRows);
+})();
+</script>
+@endpush
+
 
 
 

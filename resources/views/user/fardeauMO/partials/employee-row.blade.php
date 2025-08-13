@@ -1,6 +1,12 @@
 @if(isset($employee))
 <tr data-id="{{ $employee->id }}">
-<td><input type="text" class="form-control form-control-sm" name="employee_name"></td>
+<td>
+    <input type="text"
+           class="form-control form-control-sm"
+           name="employee_name"
+           list="usersList"
+           placeholder="Nom employé (ou taper un nouveau)">
+</td>
 <td><input type="text" class="form-control form-control-sm" name="position"></td>
 <td><input type="number" step="0.01" class="form-control form-control-sm" name="hours_worked_annual"></td>
 <td><input type="number" step="0.01" class="form-control form-control-sm" name="weeks_worked"></td>

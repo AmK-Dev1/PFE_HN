@@ -224,10 +224,15 @@ Route::controller(\App\Http\Controllers\User\EnteteActiviteController::class)->g
     Route::post('/user/fardeauMO/entetes', 'store')->name('user.fardeauMO.entetes.store'); // AJAX store
     Route::put('/user/fardeauMO/entetes/{id}', 'update')->name('user.fardeauMO.entetes.update'); // AJAX update
     Route::delete('/user/fardeauMO/entetes/{id}', 'destroy')->name('user.fardeauMO.entetes.destroy'); // AJAX delete
+    Route::post('/user/fardeauMO/employees/bulk-save', 'bulkSave')->name('user.fardeauMO.employees.bulkSave');
     Route::post('/user/fardeauMO/entetes/store-ajax', 'storeFromAjax')->name('user.fardeauMO.entetes.storeAjax');
 });
 Route::post('/user/fardeauMO/entetes/store-ajax', [EnteteActiviteController::class, 'storeFromAjax'])
 ->name('user.fardeauMO.entetes.storeAjax');
+Route::controller(\App\Http\Controllers\User\RecapitulatifActiviteController::class)->group(function () {
+    Route::get('/user/fardeauMO/recap', 'show')->name('user.fardeauMO.recap.show');
+    Route::post('/user/fardeauMO/recap/recompute', 'recompute')->name('user.fardeauMO.recap.recompute');
+});
 
 Route::controller(\App\Http\Controllers\User\TaskController::class)->group(function () {
     Route::get('/user/tasks', 'index')->name('user.tasks.index');
@@ -249,6 +254,8 @@ Route::controller(\App\Http\Controllers\User\AmortissementController::class)->gr
     Route::post('/amortissements/import/{year}', 'import')->name('user.amortissements.import');
     Route::post('/amortissements/store-imported/{year}', 'storeImported')->name('user.amortissements.storeImported');
     Route::delete('/amortissements/{year}', 'destroy')->name('user.amortissements.destroy');
+      // ✅ Nouvelle route ajoutée
+    Route::get('/amortissements/row', 'row')->name('user.amortissements.row');
 });
 
 

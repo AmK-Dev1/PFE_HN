@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Http\Controllers\User;
 
@@ -43,30 +43,32 @@ class AmortissementController extends Controller
             ->where('year', $i)
             ->get();
 
-        // ✅ Si l’année courante est vide mais que l’année précédente a des données
+        // ✅ Si l'année n'existe pas → copier depuis la dernière année disponible
         if ($currentData->isEmpty() && $i > $start) {
-            $previousYear = $i - 1;
-            $previousData = Amortissement::where('company_id', $companyId)
-                ->where('year', $previousYear)
+            $previousYearData = Amortissement::where('company_id', $companyId)
+                ->where('year', '<', $i)
+                ->orderBy('year', 'desc')
                 ->get();
 
-            // On duplique les lignes pour préremplir
-            $copied = $previousData->map(function ($item) use ($i) {
-                return [
-                    'poste' => $item->poste,
-                    'cout' => $item->cout,
-                    'amort_cumule_anterieur' => $item->amort_cumule_anterieur + $item->amortissement_annee,
-                    'valeur_nette_anterieure' => ($item->cout - ($item->amort_cumule_anterieur + $item->amortissement_annee)),
-                    'acquisition_annee' => 0,
-                    'amortissement_annee' => 0,
-                    'amortissement_mensuel' => 0,
-                    'taux' => $item->taux,
-                    'type_amortissement' => $item->type_amortissement,
-                    'year' => $i,
-                ];
-            });
+            if ($previousYearData->isNotEmpty()) {
+                $copied = $previousYearData->map(function ($item) use ($i) {
+                    return [
+                        'poste' => $item->poste,
+                        'cout' => $item->cout + $item->acquisition_annee,
+                        'amort_cumule_anterieur' => $item->amort_cumule_anterieur + $item->amortissement_annee,
+                        'valeur_nette_anterieure' => ($item->cout + $item->acquisition_annee)
+                            - ($item->amort_cumule_anterieur + $item->amortissement_annee),
+                        'acquisition_annee' => 0,
+                        'amortissement_annee' => 0,
+                        'amortissement_mensuel' => 0,
+                        'taux' => $item->taux,
+                        'type_amortissement' => $item->type_amortissement,
+                        'year' => $i,
+                    ];
+                });
 
-            $dataByYear[$i] = $copied->toArray();
+                $dataByYear[$i] = $copied->toArray();
+            }
         } else {
             $dataByYear[$i] = $currentData->toArray();
         }
@@ -75,78 +77,82 @@ class AmortissementController extends Controller
     return view('user.amortissements.create', compact('start', 'end', 'dataByYear'));
 }
 
+   public function store(Request $request)
+{
+    $companyId = session('company_id') ?? Auth::user()->company_id;
+    session(['company_id' => $companyId]);
 
-    public function store(Request $request)
-    {
-        $companyId = session('company_id') ?? Auth::user()->company_id;
-        session(['company_id' => $companyId]);
+    $data = $request->input('amortissements');
+    $activeYear = $request->input('active_year');
 
-        $data = $request->input('amortissements');
-        $activeYear = $request->input('active_year');
-
-        foreach ($data as $year => $lignes) {
-            foreach ($lignes as $ligne) {
-                if (empty(trim($ligne['poste'] ?? '')) || empty($ligne['taux'])) {
-                    continue;
-                }
-
-                $poste = trim($ligne['poste']);
-                $taux = (float) $ligne['taux'];
-                $type_amortissement = $ligne['type_amortissement'];
-                $acquisition_annee = isset($ligne['acquisition_annee']) ? (float) $ligne['acquisition_annee'] : 0;
-
-                if ($year == min(array_keys($data))) {
-                    $cout = (float) ($ligne['cout'] ?? 0);
-                    $amort_cumule_anterieur = (float) ($ligne['amort_cumule_anterieur'] ?? 0);
-                } else {
-                    $prev = Amortissement::where('poste', $poste)
-                        ->where('year', $year - 1)
-                        ->where('company_id', $companyId)
-                        ->first();
-
-                    if (!$prev) continue;
-
-                    $cout = $prev->cout;
-                    $amort_cumule_anterieur = $prev->amort_cumule_anterieur + $prev->amortissement_annee;
-                    $type_amortissement = $prev->type_amortissement;
-                    $taux = $prev->taux;
-                }
-
-                $valeur_nette_anterieure = $cout - $amort_cumule_anterieur;
-
-                if ($type_amortissement === 'L') {
-                    $amortissement_annee = $cout * ($taux / 100) * 0.5;
-                } elseif ($type_amortissement === 'D') {
-                    $amortissement_annee = ($valeur_nette_anterieure + ($acquisition_annee / 2)) * ($taux / 100);
-                } else {
-                    $amortissement_annee = 0;
-                }
-
-                $amortissement_mensuel = $amortissement_annee / 12;
-
-                Amortissement::updateOrCreate([
-                    'company_id' => $companyId,
-                    'poste' => $poste,
-                    'year' => $year
-                ], [
-                    'cout' => $cout,
-                    'amort_cumule_anterieur' => $amort_cumule_anterieur,
-                    'valeur_nette_anterieure' => $valeur_nette_anterieure,
-                    'acquisition_annee' => $acquisition_annee,
-                    'amortissement_annee' => $amortissement_annee,
-                    'amortissement_mensuel' => $amortissement_mensuel,
-                    'taux' => $taux,
-                    'type_amortissement' => $type_amortissement,
-                ]);
+    foreach ($data as $year => $lignes) {
+        foreach ($lignes as $ligne) {
+            if (empty(trim($ligne['poste'] ?? '')) || empty($ligne['taux'])) {
+                continue;
             }
-        }
 
-        return redirect()
-            ->back()
-            ->withInput()
-            ->with('success', 'Amortissements enregistrés avec succès.')
-            ->with('active_year', $activeYear);
+            $poste = trim($ligne['poste']);
+            $taux = (float) $ligne['taux'];
+            $type_amortissement = $ligne['type_amortissement'];
+            $acquisition_annee = isset($ligne['acquisition_annee']) ? (float) $ligne['acquisition_annee'] : 0;
+
+            if ($year == min(array_keys($data))) {
+                // Première année saisie manuellement
+                $cout = (float) ($ligne['cout'] ?? 0);
+                $amort_cumule_anterieur = (float) ($ligne['amort_cumule_anterieur'] ?? 0);
+            } else {
+                // 🔹 Prendre la dernière année existante avant l'année courante
+                $prev = Amortissement::where('poste', $poste)
+                    ->where('year', '<', $year)
+                    ->where('company_id', $companyId)
+                    ->orderBy('year', 'desc')
+                    ->first();
+
+                if (!$prev) continue;
+
+                $cout = $prev->cout + $prev->acquisition_annee;
+                $amort_cumule_anterieur = $prev->amort_cumule_anterieur + $prev->amortissement_annee;
+                $type_amortissement = $prev->type_amortissement;
+                $taux = $prev->taux;
+            }
+
+            $valeur_nette_anterieure = $cout - $amort_cumule_anterieur;
+
+            // 🔹 Calcul amortissement annuel
+            if ($type_amortissement === 'L') {
+                $amortissement_annee = $cout * ($taux / 100) * 0.5;
+            } elseif ($type_amortissement === 'D') {
+                $amortissement_annee = ($valeur_nette_anterieure + ($acquisition_annee / 2)) * ($taux / 100);
+            } else {
+                $amortissement_annee = 0;
+            }
+
+            $amortissement_mensuel = $amortissement_annee / 12;
+
+            Amortissement::updateOrCreate([
+                'company_id' => $companyId,
+                'poste' => $poste,
+                'year' => $year
+            ], [
+                'cout' => $cout,
+                'amort_cumule_anterieur' => $amort_cumule_anterieur,
+                'valeur_nette_anterieure' => $valeur_nette_anterieure,
+                'acquisition_annee' => $acquisition_annee,
+                'amortissement_annee' => $amortissement_annee,
+                'amortissement_mensuel' => $amortissement_mensuel,
+                'taux' => $taux,
+                'type_amortissement' => $type_amortissement,
+            ]);
+        }
     }
+
+    return redirect()
+        ->back()
+        ->withInput()
+        ->with('success', 'Amortissements enregistrés avec succès.')
+        ->with('active_year', $activeYear);
+}
+
 
     public function import(Request $request, $year)
     {
